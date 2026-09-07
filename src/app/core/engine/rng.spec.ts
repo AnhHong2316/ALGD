@@ -54,4 +54,62 @@ describe('rng', () => {
     const shuffledOnce = shuffle(rng, input);
     expect(shuffledOnce).not.toEqual(input);
   });
+
+  it('ghi nhận cách ép hạt giống: NaN và Infinity đều thành 0', () => {
+    const zero = createSeededRng(0);
+    const expected = [zero(), zero(), zero()];
+
+    const nan = createSeededRng(NaN);
+    const infinite = createSeededRng(Infinity);
+
+    expect([nan(), nan(), nan()]).toEqual(expected);
+    expect([infinite(), infinite(), infinite()]).toEqual(expected);
+  });
+
+  it('ghi nhận cách ép hạt giống: số thập phân bị cắt phần lẻ', () => {
+    const whole = createSeededRng(7);
+    const fractional = createSeededRng(7.9);
+
+    expect([fractional(), fractional()]).toEqual([whole(), whole()]);
+  });
+
+  it('ghi nhận cách ép hạt giống: số âm quấn theo bù hai', () => {
+    const negative = createSeededRng(-1);
+    const wrapped = createSeededRng(4294967295);
+
+    expect([negative(), negative()]).toEqual([wrapped(), wrapped()]);
+  });
+
+  it('pickIndex từ chối độ dài âm, không nguyên, hoặc NaN', () => {
+    const rng = createSeededRng(3);
+
+    expect(() => pickIndex(rng, -1)).toThrow();
+    expect(() => pickIndex(rng, 2.5)).toThrow();
+    expect(() => pickIndex(rng, NaN)).toThrow();
+  });
+
+  it('pickIndex với độ dài 1 luôn trả về 0', () => {
+    const rng = createSeededRng(3);
+
+    for (let i = 0; i < 50; i++) {
+      expect(pickIndex(rng, 1)).toBe(0);
+    }
+  });
+
+  it('shuffle chạy được trên mảng đã đóng băng', () => {
+    const rng = createSeededRng(8);
+    const frozen = Object.freeze(['a', 'b', 'c', 'd']);
+
+    const output = shuffle(rng, frozen);
+
+    expect([...output].sort()).toEqual(['a', 'b', 'c', 'd']);
+    expect(frozen).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('shuffle xử lý được mảng rỗng và mảng một phần tử', () => {
+    const rng = createSeededRng(8);
+
+    expect(shuffle(rng, [])).toEqual([]);
+    expect(shuffle(rng, ['a'])).toEqual(['a']);
+  });
 });
