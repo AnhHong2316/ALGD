@@ -4,12 +4,15 @@ import {
   GameConfig,
   GameState,
   NarrationEvent,
+  NarrationEventType,
   Player,
   Role,
 } from '../models';
 import { Rng, pickIndex, shuffle } from './rng';
 import { validateTeam } from './team-rules';
 import { findVoteLeaders, isTallyValid, VoteTally } from './vote-resolver';
+import { isGuessCorrect } from './guess-matcher';
+import { evaluateOutcome } from './win-conditions';
 
 export interface EngineResult {
   state: GameState;
@@ -317,5 +320,55 @@ export function resolveTie(
     events: [
       { type: 'VOTE_OPEN', payload: { village: next.villageName, round: next.round } },
     ],
+  };
+}
+
+export function submitWhiteGuess(state: GameState, text: string): EngineResult {
+  if (state.phase !== 'WHITE_GUESS') {
+    throw new Error('submitWhiteGuess: chỉ gọi được ở pha mũ trắng đoán từ');
+  }
+
+  const correct = isGuessCorrect(text, state.civilianWord);
+  const guessed: GameState = { ...state, whiteGuess: { text, correct } };
+
+  if (correct) {
+    const next: GameState = { ...guessed, phase: 'ENDED', outcome: 'WHITE' };
+    return {
+      state: next,
+      events: [
+        { type: 'WHITE_GUESS_CORRECT', payload: { village: next.villageName } },
+        { type: 'WHITE_WIN', payload: { village: next.villageName } },
+      ],
+    };
+  }
+
+  return {
+    state: { ...guessed, phase: 'REVEAL' },
+    events: [
+      { type: 'WHITE_GUESS_WRONG', payload: { village: guessed.villageName } },
+    ],
+  };
+}
+
+const WIN_EVENT: Record<string, NarrationEventType> = {
+  CIVILIANS: 'CIVILIANS_WIN',
+  SPIES: 'SPIES_WIN',
+  WHITE: 'WHITE_WIN',
+};
+
+export function continueAfterReveal(state: GameState, rng: Rng): EngineResult {
+  if (state.phase !== 'REVEAL') {
+    throw new Error('continueAfterReveal: chỉ gọi được ở pha lộ danh tính');
+  }
+
+  const outcome = evaluateOutcome(state);
+  if (outcome === null) {
+    return startRound({ ...state, round: state.round + 1 }, rng);
+  }
+
+  const next: GameState = { ...state, phase: 'ENDED', outcome };
+  return {
+    state: next,
+    events: [{ type: WIN_EVENT[outcome], payload: { village: next.villageName } }],
   };
 }

@@ -3,14 +3,16 @@ import { CardContent, DEFAULT_GAME_CONFIG, GameConfig, Player, Role } from '../m
 import {
   advanceSpeaker,
   buildCard,
+  continueAfterReveal,
   createGame,
   NewGameInput,
   resolveTie,
   revealNextPlayer,
   submitVotes,
+  submitWhiteGuess,
 } from './game-engine';
 import { createSeededRng } from './rng';
-import { makeState } from './testing/make-state';
+import { makeState, TEST_CIVILIAN_WORD } from './testing/make-state';
 
 const PAIR = { id: 'pair-1', civilianWord: 'con mèo', spyWord: 'con chó' };
 
@@ -518,5 +520,134 @@ describe('resolveTie', () => {
   it('báo lỗi khi gọi ngoài pha xử hoà', () => {
     const state = makeState({ roles: ['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'] });
     expect(() => resolveTie(state, 'REVOTE', createSeededRng(1))).toThrow(/xử hoà/);
+  });
+});
+
+describe('submitWhiteGuess', () => {
+  function whiteGuessing(aliveIndexes: number[]) {
+    return makeState({
+      roles: ['CIVILIAN', 'CIVILIAN', 'SPY', 'WHITE'],
+      aliveIndexes,
+      phase: 'WHITE_GUESS',
+      round: 3,
+    });
+  }
+
+  it('đoán đúng thì mũ trắng thắng ngay, ván dừng lập tức', () => {
+    const result = submitWhiteGuess(whiteGuessing([0, 1, 2]), TEST_CIVILIAN_WORD);
+
+    expect(result.state.phase).toBe('ENDED');
+    expect(result.state.outcome).toBe('WHITE');
+    expect(result.state.whiteGuess).toEqual({
+      text: TEST_CIVILIAN_WORD,
+      correct: true,
+    });
+    expect(result.events.map((event) => event.type)).toEqual([
+      'WHITE_GUESS_CORRECT',
+      'WHITE_WIN',
+    ]);
+  });
+
+  it('chấp nhận đoán đúng dù thiếu dấu', () => {
+    const result = submitWhiteGuess(
+      whiteGuessing([0, 1, 2]),
+      'qua thanh long bi mat',
+    );
+
+    expect(result.state.outcome).toBe('WHITE');
+  });
+
+  it('đoán đúng thắng đè cả lên tình huống gián điệp đang áp đảo', () => {
+    // Còn 1 dân và 1 gián điệp: bình thường là gián điệp thắng.
+    const result = submitWhiteGuess(whiteGuessing([0, 2]), TEST_CIVILIAN_WORD);
+
+    expect(result.state.outcome).toBe('WHITE');
+  });
+
+  it('đoán sai thì rời ván và chuyển sang pha lộ danh tính', () => {
+    const result = submitWhiteGuess(whiteGuessing([0, 1, 2]), 'cái bàn gỗ');
+
+    expect(result.state.phase).toBe('REVEAL');
+    expect(result.state.outcome).toBeNull();
+    expect(result.state.whiteGuess).toEqual({ text: 'cái bàn gỗ', correct: false });
+    expect(result.events.map((event) => event.type)).toEqual(['WHITE_GUESS_WRONG']);
+  });
+
+  it('báo lỗi khi gọi ngoài pha đoán từ', () => {
+    const state = makeState({ roles: ['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'] });
+    expect(() => submitWhiteGuess(state, 'gì đó')).toThrow(/đoán từ/);
+  });
+});
+
+describe('continueAfterReveal', () => {
+  function revealed(roles: Role[], aliveIndexes: number[]) {
+    return makeState({ roles, aliveIndexes, phase: 'REVEAL', round: 3 });
+  }
+
+  it('ván chưa ngã ngũ thì sang vòng nói mới với thứ tự xáo lại', () => {
+    const state = revealed(['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'], [0, 1, 3]);
+    const result = continueAfterReveal(state, createSeededRng(9));
+
+    expect(result.state.phase).toBe('SPEAKING');
+    expect(result.state.round).toBe(4);
+    expect(result.state.speakerIndex).toBe(0);
+    expect([...result.state.speakingOrder].sort()).toEqual(['p0', 'p1', 'p3']);
+    expect(result.events.map((event) => event.type)).toEqual([
+      'ROUND_START',
+      'SPEAKER_TURN',
+    ]);
+  });
+
+  it('dân làng thắng thì kết thúc và phát đúng sự kiện', () => {
+    const state = revealed(['CIVILIAN', 'CIVILIAN', 'SPY'], [0, 1]);
+    const result = continueAfterReveal(state, createSeededRng(9));
+
+    expect(result.state.phase).toBe('ENDED');
+    expect(result.state.outcome).toBe('CIVILIANS');
+    expect(result.events).toEqual([
+      { type: 'CIVILIANS_WIN', payload: { village: 'Thử Nghiệm' } },
+    ]);
+  });
+
+  it('gián điệp thắng thì kết thúc và phát đúng sự kiện', () => {
+    const state = revealed(['CIVILIAN', 'CIVILIAN', 'SPY'], [0, 2]);
+    const result = continueAfterReveal(state, createSeededRng(9));
+
+    expect(result.state.outcome).toBe('SPIES');
+    expect(result.events[0].type).toBe('SPIES_WIN');
+  });
+
+  it('chỉ còn mũ trắng sống một mình thì mũ trắng thắng', () => {
+    const state = revealed(['CIVILIAN', 'CIVILIAN', 'SPY', 'WHITE'], [3]);
+    const result = continueAfterReveal(state, createSeededRng(9));
+
+    expect(result.state.outcome).toBe('WHITE');
+    expect(result.events[0].type).toBe('WHITE_WIN');
+  });
+
+  it('hết gián điệp mà mũ trắng còn sống thì ván tiếp tục', () => {
+    const state = revealed(['CIVILIAN', 'CIVILIAN', 'SPY', 'WHITE'], [0, 1, 3]);
+    const result = continueAfterReveal(state, createSeededRng(9));
+
+    expect(result.state.phase).toBe('SPEAKING');
+    expect(result.state.outcome).toBeNull();
+  });
+
+  it('mũ trắng đoán sai rồi thì trận tiếp tục bình thường', () => {
+    const state = {
+      ...revealed(['CIVILIAN', 'CIVILIAN', 'SPY', 'WHITE'], [0, 1, 2]),
+      whiteGuess: { text: 'sai bét', correct: false },
+    };
+    const result = continueAfterReveal(state, createSeededRng(9));
+
+    expect(result.state.phase).toBe('SPEAKING');
+    expect(result.state.outcome).toBeNull();
+  });
+
+  it('báo lỗi khi gọi ngoài pha lộ danh tính', () => {
+    const state = makeState({ roles: ['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'] });
+    expect(() => continueAfterReveal(state, createSeededRng(9))).toThrow(
+      /lộ danh tính/,
+    );
   });
 });
