@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { CardContent, DEFAULT_GAME_CONFIG, GameConfig, Player } from '../models';
-import { buildCard, createGame, NewGameInput } from './game-engine';
+import {
+  buildCard,
+  createGame,
+  NewGameInput,
+  revealNextPlayer,
+} from './game-engine';
 import { createSeededRng } from './rng';
 
 const PAIR = { id: 'pair-1', civilianWord: 'con mèo', spyWord: 'con chó' };
@@ -174,5 +179,67 @@ describe('buildCard', () => {
   it('báo lỗi khi hỏi thẻ của người không tồn tại', () => {
     const { state } = createGame(makeInput());
     expect(() => buildCard(state, 'khong-co-ai')).toThrow();
+  });
+});
+
+describe('revealNextPlayer', () => {
+  it('chuyền máy lần lượt theo đúng thứ tự danh sách', () => {
+    const rng = createSeededRng(11);
+    let result = createGame(makeInput({ players: makePlayers(4), rng }));
+
+    result = revealNextPlayer(result.state, rng);
+    expect(result.state.dealtCount).toBe(1);
+    expect(result.events).toEqual([
+      { type: 'PASS_DEVICE', payload: { player: 'Người 1' } },
+    ]);
+
+    result = revealNextPlayer(result.state, rng);
+    expect(result.events).toEqual([
+      { type: 'PASS_DEVICE', payload: { player: 'Người 2' } },
+    ]);
+  });
+
+  it('người cuối cùng xem xong thì tự mở vòng nói đầu tiên', () => {
+    const rng = createSeededRng(11);
+    let result = createGame(makeInput({ players: makePlayers(4), rng }));
+
+    for (let i = 0; i < 4; i++) {
+      result = revealNextPlayer(result.state, rng);
+    }
+
+    expect(result.state.phase).toBe('SPEAKING');
+    expect(result.state.round).toBe(1);
+    expect(result.state.speakingOrder).toHaveLength(4);
+    expect([...result.state.speakingOrder].sort()).toEqual([
+      'p0',
+      'p1',
+      'p2',
+      'p3',
+    ]);
+    expect(result.state.speakerIndex).toBe(0);
+
+    expect(result.events.map((event) => event.type)).toEqual([
+      'ROUND_START',
+      'SPEAKER_TURN',
+    ]);
+  });
+
+  it('thứ tự nói không phải lúc nào cũng trùng thứ tự danh sách', () => {
+    const orders = new Set<string>();
+    for (let seed = 0; seed < 30; seed++) {
+      const rng = createSeededRng(seed);
+      let result = createGame(makeInput({ players: makePlayers(5), rng }));
+      for (let i = 0; i < 5; i++) result = revealNextPlayer(result.state, rng);
+      orders.add(result.state.speakingOrder.join(','));
+    }
+    expect(orders.size).toBeGreaterThan(1);
+  });
+
+  it('báo lỗi khi gọi ngoài pha chia bài', () => {
+    const rng = createSeededRng(11);
+    let result = createGame(makeInput({ players: makePlayers(4), rng }));
+    for (let i = 0; i < 4; i++) result = revealNextPlayer(result.state, rng);
+
+    expect(() => revealNextPlayer(result.state, rng)).toThrow(/chia bài/);
   });
 });

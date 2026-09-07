@@ -115,3 +115,51 @@ export function buildCard(state: GameState, playerId: string): CardContent {
     note: null,
   };
 }
+
+function nameOf(state: GameState, playerId: string): string {
+  return state.players.find((player) => player.id === playerId)?.name ?? '';
+}
+
+/**
+ * Mở một vòng nói mới: xáo lại thứ tự trong số người còn sống và đưa về
+ * người nói đầu tiên. Cũng dọn sạch dấu vết của lượt vote trước.
+ */
+function startRound(state: GameState, rng: Rng): EngineResult {
+  const speakingOrder = shuffle(rng, state.aliveIds);
+  const next: GameState = {
+    ...state,
+    phase: 'SPEAKING',
+    speakingOrder,
+    speakerIndex: 0,
+    tiedCandidateIds: [],
+    revoteUsed: false,
+  };
+
+  return {
+    state: next,
+    events: [
+      { type: 'ROUND_START', payload: { village: next.villageName, round: next.round } },
+      { type: 'SPEAKER_TURN', payload: { player: nameOf(next, speakingOrder[0]) } },
+    ],
+  };
+}
+
+export function revealNextPlayer(state: GameState, rng: Rng): EngineResult {
+  if (state.phase !== 'DEALING') {
+    throw new Error('revealNextPlayer: chỉ gọi được ở pha chia bài');
+  }
+
+  const dealtCount = state.dealtCount + 1;
+  const dealt: GameState = { ...state, dealtCount };
+
+  if (dealtCount < state.players.length) {
+    return {
+      state: dealt,
+      events: [
+        { type: 'PASS_DEVICE', payload: { player: state.players[dealtCount].name } },
+      ],
+    };
+  }
+
+  return startRound(dealt, rng);
+}
