@@ -57,6 +57,12 @@ interface PlayOptions {
    * các lượt vote rốt cuộc có phân định.
    */
   forceTieCount?: number;
+  /**
+   * Luôn ép hoà khi chỉ còn đúng 2 người sống, để chạm vào nhánh bốc ngẫu
+   * nhiên. Khác với forceTieCount, tuỳ chọn này không phụ thuộc vào việc đã
+   * bỏ bao nhiêu lượt phiếu trước đó.
+   */
+  tieAtTwoAlive?: boolean;
 }
 
 /**
@@ -104,7 +110,9 @@ function playToEnd(
 
         const tally: Record<string, number> = {};
         const shouldTie =
-          votesCast < (options.forceTieCount ?? 0) && candidates.length >= 2;
+          candidates.length >= 2 &&
+          ((options.tieAtTwoAlive === true && current.aliveIds.length === 2) ||
+            votesCast < (options.forceTieCount ?? 0));
         votesCast++;
 
         if (shouldTie) {
@@ -270,6 +278,27 @@ describe('bất biến: ván luôn kết thúc', () => {
         expect(guessedRight || lastOneStanding).toBe(true);
       }
     }
+  });
+
+  it('hoà ở đúng nước cờ hai người cuối vẫn kết thúc, không treo', () => {
+    let reachedRandomTieBreak = 0;
+
+    for (let seed = 0; seed < 30; seed++) {
+      const { result, rng } = startGame(4, { spyCount: 1, hasWhite: true }, seed);
+      const ended = playToEnd(result.state, rng, { tieAtTwoAlive: true });
+
+      expect(ended.state.phase).toBe('ENDED');
+      expect(ended.state.outcome).not.toBeNull();
+
+      if (ended.state.eliminations.some((e) => e.byRandomTieBreak)) {
+        reachedRandomTieBreak++;
+      }
+    }
+
+    // Khẳng định nhánh bốc ngẫu nhiên thật sự được chạm tới. Không có dòng này
+    // thì test vẫn xanh kể cả khi nó chưa bao giờ đi tới nước cờ hai người,
+    // tức là chỉ lặp lại điều mà các test khác đã phủ.
+    expect(reachedRandomTieBreak).toBeGreaterThan(0);
   });
 });
 
