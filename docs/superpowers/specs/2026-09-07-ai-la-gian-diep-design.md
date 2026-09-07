@@ -46,27 +46,29 @@ Số mũ trắng tối đa là 1, và có thể tắt.
 
 ### 3.2 Chế độ Bật mí
 
-Một công tắc ở màn cấu hình, quyết định **gián điệp có được cho biết mình là gián điệp hay không**. Mặc định tắt.
+Một công tắc ở màn cấu hình, quyết định **người chơi có được cho biết vai của mình hay không**. Mặc định tắt.
 
 | | Bật mí **tắt** (mặc định) | Bật mí **bật** |
 |---|---|---|
-| Thẻ của dân làng | Chỉ hiện từ, không ghi vai | Chỉ hiện từ, không ghi vai |
+| Thẻ của dân làng | Chỉ hiện từ, không ghi vai | Hiện từ **kèm dòng "Bạn là DÂN LÀNG"** |
 | Thẻ của gián điệp | Chỉ hiện từ, không ghi vai | Hiện từ **kèm dòng "Bạn là GIÁN ĐIỆP"** |
 | Thẻ của mũ trắng | "Bạn là MŨ TRẮNG — không có từ nào" | Như bên trái |
 
-Khi Bật mí tắt, thẻ của dân làng và thẻ của gián điệp phải **giống hệt nhau về mọi mặt** — cùng bố cục, cùng màu, cùng chữ, chỉ khác đúng cái từ. Không được có bất kỳ dấu hiệu nào cho phép suy ra vai: không đổi màu viền, không đổi icon, không khác nhau về thời gian tải. Đây là ràng buộc bắt buộc, vì lộ ở đây là hỏng cả ván.
+Khi Bật mí **tắt**, thẻ của dân làng và thẻ của gián điệp phải **giống hệt nhau về mọi mặt** — cùng bố cục, cùng màu, cùng chữ, chỉ khác đúng cái từ. Không được có bất kỳ dấu hiệu nào cho phép suy ra vai: không đổi màu viền, không đổi icon, không khác nhau về thời gian tải. Đây là ràng buộc bắt buộc, vì lộ ở đây là hỏng cả ván.
+
+Khi Bật mí **bật**, thẻ dân làng và thẻ gián điệp vẫn phải giống nhau về bố cục và màu sắc, chỉ khác nội dung chữ ở dòng vai và dòng từ. Lý do: người bên cạnh liếc thấy hình dạng thẻ thì không được suy ra vai, mà phải đọc được chữ mới biết.
 
 **Gián điệp không bao giờ biết đồng đội của mình là ai**, kể cả khi Bật mí đang bật. Ván có 2–3 gián điệp thì họ vẫn có thể vote nhầm nhau.
 
 Chế độ này chỉ đổi phần thông tin lúc chia bài. Nó **không** đổi luật thắng thua, cách vote, hay cách tính điểm.
 
-Ghi chú cân bằng: bật chế độ này làm gián điệp mạnh lên rõ rệt, vì họ khỏi mất một hai vòng để tự nhận ra mình lạc đàn và có thể đi lừa ngay từ câu đầu. Điểm thưởng của gián điệp vẫn để nguyên mặc định `+2`; nếu nhóm thấy lệch thì hạ xuống `+1` trong Cài đặt.
+Ghi chú cân bằng: chế độ này bỏ đi lớp "tự nghi ngờ chính mình" của cả bàn — không ai còn phải mất một hai vòng để đoán xem mình có đang lạc đàn không. Phần lợi nghiêng về gián điệp, vì họ đi lừa được ngay từ câu đầu, trong khi dân làng vốn đã mặc định coi mình là dân nên biết chắc cũng không lợi thêm bao nhiêu. Điểm thưởng của gián điệp vẫn để nguyên mặc định `+2`; nếu nhóm thấy lệch thì hạ xuống `+1` trong Cài đặt.
 
 App ghi nhớ lựa chọn Bật mí của ván gần nhất và điền sẵn cho ván sau.
 
 ### 3.3 Ràng buộc đội hình
 
-- Tối thiểu 4 người chơi. Nếu bật mũ trắng thì tối thiểu 5.
+- Tối thiểu 4 người chơi, kể cả khi bật mũ trắng. Đội hình 4 người nhỏ nhất có mũ trắng là **2 dân làng + 1 gián điệp + 1 mũ trắng**.
 - Tối đa 12 người chơi.
 - `soDan = tongSoNguoi - soGianDiep - (coMuTrang ? 1 : 0)`
 - Bắt buộc `soGianDiep >= 1` và `soDan > soGianDiep`.
@@ -78,7 +80,7 @@ Số gián điệp tối đa suy ra trực tiếp từ ràng buộc `soDan > soG
 
 | Sĩ số | Gợi ý | Tối đa (không mũ trắng) | Tối đa (có mũ trắng) |
 |---|---|---|---|
-| 4 | 1 | 1 | — (không đủ người) |
+| 4 | 1 | 1 | 1 |
 | 5 | 1 | 2 | 1 |
 | 6 | 1 | 2 | 2 |
 | 7 | 2 | 3 | 2 |
@@ -139,6 +141,10 @@ Khi có từ hai người trở lên cùng số phiếu cao nhất, app cho qu�
 Cả hai trường hợp đều quay về vòng nói và `round` tiếp tục tăng, không ai bị loại nên không kiểm tra điều kiện kết thúc.
 
 `revoteUsed` được đặt lại về `false` mỗi khi bước vào một lượt vote mới, nên mỗi lượt vote đều có quyền bỏ phiếu lại một lần. Khi bỏ phiếu lại, chỉ những người trong `tiedCandidateIds` mới được nhận phiếu.
+
+**Ngoại lệ khi chỉ còn 2 người sống.** Ở trạng thái này, vote hoà 1–1 là chuyện gần như chắc chắn, và "không loại ai" sẽ khiến ván lặp vô tận vì số người sống không bao giờ giảm. Nên khi `aliveIds.length === 2` mà vote hoà, app **bốc ngẫu nhiên một trong hai người để loại**, không cho chọn bỏ phiếu lại và không cho chọn không loại ai. Màn hình nói rõ đây là bốc ngẫu nhiên để phân định.
+
+Trạng thái này chỉ xuất hiện khi đã loại hết gián điệp mà mũ trắng còn sống — vì nếu còn gián điệp trong hai người cuối thì điều kiện "gián điệp thắng" ở mục 3.5 đã kích hoạt trước rồi. Nó là đường đi có thật, dễ gặp nhất ở đội hình 4 người có mũ trắng.
 
 ### 3.8 Tính điểm
 
@@ -322,7 +328,7 @@ Nhập tên từng người, kéo thả để đổi thứ tự, xoá. Có nút 
 - **Tên làng** — ô nhập tuỳ chọn, kèm nút 🎲 bốc ngẫu nhiên từ danh sách vui có sẵn. Có công tắc "giữ tên này cho ván sau".
 - **Số gián điệp** — bộ chọn, tự giới hạn theo bảng ở mục 3.3, hiện rõ lý do khi một giá trị bị chặn.
 - **Mũ trắng** — công tắc bật/tắt.
-- **Bật mí** — công tắc bật/tắt, kèm một dòng giải thích ngắn ngay dưới: "Gián điệp sẽ biết mình là gián điệp. Ván sẽ dễ hơn cho gián điệp." Điền sẵn theo lựa chọn của ván gần nhất.
+- **Bật mí** — công tắc bật/tắt, kèm một dòng giải thích ngắn ngay dưới: "Mỗi người sẽ biết vai của mình. Ván sẽ dễ hơn cho gián điệp." Điền sẵn theo lựa chọn của ván gần nhất.
 - **Chủ đề và độ khó** — chọn nhiều.
 - **Đồng hồ mỗi lượt nói** — mặc định 30 giây, tắt được.
 
@@ -351,7 +357,7 @@ buildCard(state: GameState, playerId: string): CardContent
 
 | Vai | Bật mí tắt | Bật mí bật |
 |---|---|---|
-| Dân làng | `roleLabel: null`, `word: "con mèo"` | Giống hệt cột trái |
+| Dân làng | `roleLabel: null`, `word: "con mèo"` | `roleLabel: "Bạn là DÂN LÀNG"`, `word: "con mèo"` |
 | Gián điệp | `roleLabel: null`, `word: "con chó"` | `roleLabel: "Bạn là GIÁN ĐIỆP"`, `word: "con chó"` |
 | Mũ trắng | `roleLabel: "Bạn là MŨ TRẮNG"`, `word: null`, `note: "Bạn không có từ nào"` | Giống hệt cột trái |
 
@@ -483,8 +489,9 @@ Toàn bộ dữ liệu nằm trên máy qua Capacitor Preferences. Không có g�
 | Tình huống | Cách xử lý |
 |---|---|
 | Cấu hình vai không hợp lệ | Chặn tại màn cấu hình, hiện lý do cụ thể, tự đề xuất giá trị hợp lệ gần nhất |
-| Sĩ số dưới 4, hoặc dưới 5 khi bật mũ trắng | Vô hiệu nút bắt đầu, giải thích rõ |
+| Sĩ số dưới 4 | Vô hiệu nút bắt đầu, giải thích rõ. Mũ trắng không làm tăng mức tối thiểu này |
 | Hoà phiếu | Chọn bỏ phiếu lại hoặc không loại ai. Bỏ phiếu lại vẫn hoà thì không loại ai |
+| Hoà phiếu khi chỉ còn 2 người sống | Bốc ngẫu nhiên một trong hai để loại, tránh ván lặp vô tận. Không cho bỏ phiếu lại |
 | Tổng phiếu nhập vào vượt số người còn sống | Cảnh báo, không cho gửi |
 | Mũ trắng đoán đúng | Ván dừng ngay, mũ trắng thắng một mình, các điều kiện khác bị bỏ qua |
 | Mũ trắng đoán sai | Rời ván, trận tiếp tục |
@@ -505,9 +512,10 @@ Vì engine là TypeScript thuần nên toàn bộ luật ở mục 3 kiểm đư
 ### Bắt buộc phải phủ
 
 - **Điều kiện kết thúc** — cả bốn nhánh ở mục 3.5, gồm cả ca "hết gián điệp nhưng mũ trắng còn sống thì chưa kết thúc" và ca "mũ trắng đoán đúng thắng đè lên mọi điều kiện khác".
-- **Validate đội hình** — quét mọi sĩ số từ 4 đến 12, có và không có mũ trắng, khẳng định đúng khớp bảng ở mục 3.3.
+- **Validate đội hình** — quét mọi sĩ số từ 4 đến 12, có và không có mũ trắng, khẳng định đúng khớp bảng ở mục 3.3. Có một test riêng cho đội hình nhỏ nhất **4 người có mũ trắng** (2 dân + 1 gián điệp + 1 mũ trắng), vì đây là ca dễ bị chặn nhầm nhất.
 - **Nội dung thẻ chia bài** — với cả hai chế độ Bật mí, kiểm tra nội dung thẻ của từng vai đúng như bảng ở mục 3.2. Đặc biệt: khi Bật mí tắt, thẻ dân làng và thẻ gián điệp phải **giống hệt nhau ngoài đúng cái từ**, khẳng định bằng cách so sánh toàn bộ dữ liệu dựng thẻ chứ không chỉ so phần chữ hiển thị.
-- **Xử phiếu** — trường hợp thường, hoà hai người, hoà nhiều người, bỏ phiếu lại vẫn hoà, tổng phiếu không hợp lệ.
+- **Xử phiếu** — trường hợp thường, hoà hai người, hoà nhiều người, bỏ phiếu lại vẫn hoà, tổng phiếu không hợp lệ, và ca hoà khi chỉ còn 2 người sống thì phải bốc ngẫu nhiên chứ không được để không loại ai.
+- **Ván luôn kết thúc** — chạy mô phỏng đội hình 4 người có mũ trắng qua mọi thứ tự loại người có thể xảy ra, khẳng định không nhánh nào lặp vô tận và mọi nhánh đều dừng ở một `outcome` hợp lệ.
 - **Chấm đoán từ** — có dấu, không dấu, sai chính tả nhẹ, thừa khoảng trắng, khác hoàn toàn.
 - **Bốc cặp từ** — không lặp cho tới khi hết kho, có hoán đổi từ dân/gián điệp, xử đúng khi bộ lọc rỗng.
 - **Tính điểm** — cả ba kết quả, và khẳng định người đã bị loại vẫn được điểm nếu phe mình thắng.
