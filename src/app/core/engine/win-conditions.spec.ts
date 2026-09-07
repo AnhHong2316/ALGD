@@ -95,4 +95,13 @@ describe('evaluateOutcome', () => {
       expect(evaluateOutcome(state)).not.toBeNull();
     }
   });
+
+  it('báo lỗi khi không còn ai sống, thay vì tuyên một phe thắng vô nghĩa', () => {
+    const state = makeState({
+      roles: ['CIVILIAN', 'CIVILIAN', 'SPY', 'WHITE'],
+      aliveIndexes: [],
+    });
+
+    expect(() => evaluateOutcome(state)).toThrow(/không còn ai sống/);
+  });
 });

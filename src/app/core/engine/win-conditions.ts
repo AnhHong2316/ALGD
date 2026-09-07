@@ -24,6 +24,14 @@ export function countAlive(state: GameState): AliveCounts {
  * Trả về null nghĩa là ván còn tiếp tục.
  */
 export function evaluateOutcome(state: GameState): Outcome | null {
+  // Không thể xảy ra nếu engine chạy đúng: từ một người sống, hàm này luôn
+  // trả về một kết quả nên ván kết thúc trước khi danh sách rỗng. Nổ to ở
+  // đây vì nếu để lọt, phép kiểm tra số 3 sẽ đọc 0 >= 0 và tuyên bố gián
+  // điệp thắng giữa lúc không còn gián điệp nào — sai mà im lặng.
+  if (state.aliveIds.length === 0) {
+    throw new Error('evaluateOutcome: không còn ai sống, đây là trạng thái không thể xảy ra');
+  }
+
   // 1. Mũ trắng đoán đúng thì thắng ngay, đè lên mọi điều kiện khác.
   if (state.whiteGuess?.correct) return 'WHITE';
 
