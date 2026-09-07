@@ -255,8 +255,10 @@ interface GameConfig {
   spyCount: number;
   hasWhite: boolean;
   revealSpyToSpy: boolean;       // chế độ Bật mí, mặc định false
-  topics: string[];         // rỗng = tất cả chủ đề đang bật
-  difficulties: WordPair['difficulty'][];
+  // readonly + Object.freeze: hằng mặc định bị spread ở nhiều nơi mà spread
+  // chỉ copy nông, nên mảng con phải không sửa được.
+  topics: readonly string[];               // rỗng = tất cả chủ đề đang bật
+  difficulties: readonly WordPair['difficulty'][];
   timerSeconds: number | null;   // null = tắt đồng hồ
   minRoundsBeforeVote: number;   // mặc định 3
 }
@@ -318,7 +320,11 @@ interface NarrationEvent {
 }
 ```
 
-**Ràng buộc an toàn bắt buộc:** `payload` chỉ được chứa ba trường trên. Không bao giờ chứa từ bí mật. Kiểu dữ liệu chặn ở mức compile-time, và có unit test chạy hết mọi nhánh của engine để khẳng định không event nào chứa `civilianWord` hoặc `spyWord`.
+**Ràng buộc an toàn bắt buộc:** `payload` chỉ được chứa ba trường trên. Không bao giờ chứa từ bí mật.
+
+Cần nói chính xác về mức bảo đảm ở đây, vì dễ tưởng nhầm là đã an toàn tuyệt đối. TypeScript **chỉ** chặn thuộc tính thừa khi payload được viết dưới dạng object literal gán thẳng vào chỗ có kiểu `NarrationPayload`. Nó **không** chặn khi payload đi qua spread, qua một biến có kiểu rộng hơn, hay qua ép kiểu. Toàn bộ code trong engine đều viết payload dưới dạng literal inline nên lớp chặn này có tác dụng, nhưng nó là quy ước được kiểu hỗ trợ chứ không phải hàng rào không thể vượt.
+
+Lớp bảo vệ thật nằm ở unit test: chạy hết mọi nhánh của engine rồi quét toàn bộ sự kiện phát ra để khẳng định không sự kiện nào chứa `civilianWord` hoặc `spyWord`. Đó mới là thứ bắt được lỗi nếu ai đó sau này dựng payload bằng spread.
 
 ---
 
@@ -372,6 +378,8 @@ buildCard(state: GameState, playerId: string): CardContent
 
 Khi Bật mí tắt, thẻ dân làng và thẻ gián điệp phải giống nhau tới từng chi tiết dựng hình. Component render thẻ **chỉ được đọc `CardContent`**, không được đụng tới `Assignment.role`. Nhờ vậy không thể vô tình thêm một khác biệt nhỏ nào theo vai, và luật che giấu kiểm được bằng unit test thay vì phải soi mắt thường trên giao diện.
 
+Một chi tiết dựng hình cần nhớ khi làm giao diện: hai nhãn vai không dài bằng nhau (`Bạn là DÂN LÀNG` 15 ký tự, `Bạn là GIÁN ĐIỆP` 16 ký tự). Ở chế độ Bật mí bật thì điều đó không làm lộ gì thêm, vì ai cũng đã được cho biết vai của mình. Nhưng người ngồi cạnh liếc qua vẫn có thể suy ra vai từ **bề rộng dòng chữ** mà chưa cần đọc kịp. Vì vậy dòng vai phải nằm trong một khung rộng cố định, căn giữa, để hai thẻ trông giống nhau kể cả khi nhìn thoáng.
+
 ### 6.5 Vòng nói
 
 Hiện số vòng hiện tại, tên người đang tới lượt, và đồng hồ đếm ngược nếu bật. Nút "Xong lượt" chuyển người kế. Có thanh nhỏ hiện thứ tự nói của cả vòng.
@@ -422,6 +430,33 @@ Duyệt theo chủ đề, ô tìm kiếm, thêm/sửa/xoá cặp của riêng m�
 4. Nếu bộ lọc không còn cặp nào hợp lệ, app báo lỗi rõ ràng và mời nới bộ lọc, không tự ý bỏ qua bộ lọc.
 
 Cặp do người dùng thêm có `isCustom: true` và được xoá thật. Cặp gốc chỉ được đặt `hidden: true`.
+
+### Ràng buộc bắt buộc: hai từ phải đủ xa nhau sau khi chuẩn hoá
+
+Cách chấm đoán từ ở mục 3.6 bỏ dấu tiếng Việt rồi chấp nhận sai lệch tới 1 ký tự với đáp án ngắn. Điều đó tạo ra một cái bẫy có thật cho kho từ: nếu hai từ trong một cặp nằm trong khoảng sai lệch cho phép của nhau, thì mũ trắng đoán trúng **từ của gián điệp** vẫn được chấm là đúng và thắng cả ván.
+
+Tiếng Việt đặc biệt dễ dính, vì rất nhiều từ chỉ khác nhau đúng một dấu thanh, mà chuẩn hoá thì xoá sạch dấu thanh:
+
+| Cặp | Sau chuẩn hoá | Khoảng cách | Kết quả |
+|---|---|---|---|
+| bò / bó | `bo` / `bo` | 0 | Trùng khít, hàm chấm không phân biệt nổi |
+| chó / cho | `cho` / `cho` | 0 | Trùng khít |
+| mèo / heo | `meo` / `heo` | 1 | Đụng ngưỡng |
+| cá / gà | `ca` / `ga` | 1 | Đụng ngưỡng |
+| bút bi / bút chì | `but bi` / `but chi` | 2 | An toàn |
+| xe máy / xe đạp | `xe may` / `xe dap` | 2 | An toàn |
+
+Yêu cầu mục 7 rằng hai từ phải **tương đồng** càng làm chuyện này dễ xảy ra, vì người soạn kho sẽ tự nhiên chọn những cặp cùng loại như mèo/heo hay cá/gà.
+
+**Quy tắc:** với mọi cặp, khoảng cách Levenshtein giữa hai từ sau khi chuẩn hoá phải **lớn hơn** ngưỡng chấm của cả hai chiều. Cụ thể, gọi `nA` và `nB` là hai dạng chuẩn hoá, cặp chỉ hợp lệ khi:
+
+```
+levenshtein(nA, nB) > max(nguong(nA), nguong(nB))
+```
+
+trong đó `nguong(s)` là `1` nếu `s.length <= 8` và `2` nếu dài hơn.
+
+Ràng buộc này phải được kiểm ở hai nơi: một test chạy trên toàn bộ `word-bank.json` đóng gói sẵn, và một lần kiểm tra lúc người dùng thêm cặp từ của riêng họ, kèm thông báo giải thích tại sao cặp bị từ chối.
 
 ---
 
