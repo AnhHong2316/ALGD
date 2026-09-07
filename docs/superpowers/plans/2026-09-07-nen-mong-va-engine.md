@@ -1750,7 +1750,11 @@ describe('buildCard', () => {
     });
 
     // Cùng hình dạng: cùng tập trường, cùng trường nào có giá trị và trường nào null.
-    const shape = (card: Record<string, unknown>) =>
+    // Tham số phải là CardContent chứ không phải Record<string, unknown>: một
+    // interface có tên không tự thoả index signature, nên truyền vào sẽ không
+    // biên dịch được, và vì Angular type-check cả dự án nên lỗi đó chặn luôn
+    // mọi file spec khác.
+    const shape = (card: CardContent) =>
       Object.fromEntries(
         Object.entries(card).map(([key, value]) => [key, value === null]),
       );

@@ -378,6 +378,8 @@ buildCard(state: GameState, playerId: string): CardContent
 
 Khi Bật mí tắt, thẻ dân làng và thẻ gián điệp phải giống nhau tới từng chi tiết dựng hình. Component render thẻ **chỉ được đọc `CardContent`**, không được đụng tới `Assignment.role`. Nhờ vậy không thể vô tình thêm một khác biệt nhỏ nào theo vai, và luật che giấu kiểm được bằng unit test thay vì phải soi mắt thường trên giao diện.
 
+Một chi tiết dựng hình cần nhớ khi làm giao diện: hai nhãn vai không dài bằng nhau (`Bạn là DÂN LÀNG` 15 ký tự, `Bạn là GIÁN ĐIỆP` 16 ký tự). Ở chế độ Bật mí bật thì điều đó không làm lộ gì thêm, vì ai cũng đã được cho biết vai của mình. Nhưng người ngồi cạnh liếc qua vẫn có thể suy ra vai từ **bề rộng dòng chữ** mà chưa cần đọc kịp. Vì vậy dòng vai phải nằm trong một khung rộng cố định, căn giữa, để hai thẻ trông giống nhau kể cả khi nhìn thoáng.
+
 ### 6.5 Vòng nói
 
 Hiện số vòng hiện tại, tên người đang tới lượt, và đồng hồ đếm ngược nếu bật. Nút "Xong lượt" chuyển người kế. Có thanh nhỏ hiện thứ tự nói của cả vòng.
