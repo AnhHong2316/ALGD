@@ -429,6 +429,33 @@ Duyệt theo chủ đề, ô tìm kiếm, thêm/sửa/xoá cặp của riêng m�
 
 Cặp do người dùng thêm có `isCustom: true` và được xoá thật. Cặp gốc chỉ được đặt `hidden: true`.
 
+### Ràng buộc bắt buộc: hai từ phải đủ xa nhau sau khi chuẩn hoá
+
+Cách chấm đoán từ ở mục 3.6 bỏ dấu tiếng Việt rồi chấp nhận sai lệch tới 1 ký tự với đáp án ngắn. Điều đó tạo ra một cái bẫy có thật cho kho từ: nếu hai từ trong một cặp nằm trong khoảng sai lệch cho phép của nhau, thì mũ trắng đoán trúng **từ của gián điệp** vẫn được chấm là đúng và thắng cả ván.
+
+Tiếng Việt đặc biệt dễ dính, vì rất nhiều từ chỉ khác nhau đúng một dấu thanh, mà chuẩn hoá thì xoá sạch dấu thanh:
+
+| Cặp | Sau chuẩn hoá | Khoảng cách | Kết quả |
+|---|---|---|---|
+| bò / bó | `bo` / `bo` | 0 | Trùng khít, hàm chấm không phân biệt nổi |
+| chó / cho | `cho` / `cho` | 0 | Trùng khít |
+| mèo / heo | `meo` / `heo` | 1 | Đụng ngưỡng |
+| cá / gà | `ca` / `ga` | 1 | Đụng ngưỡng |
+| bút bi / bút chì | `but bi` / `but chi` | 2 | An toàn |
+| xe máy / xe đạp | `xe may` / `xe dap` | 2 | An toàn |
+
+Yêu cầu mục 7 rằng hai từ phải **tương đồng** càng làm chuyện này dễ xảy ra, vì người soạn kho sẽ tự nhiên chọn những cặp cùng loại như mèo/heo hay cá/gà.
+
+**Quy tắc:** với mọi cặp, khoảng cách Levenshtein giữa hai từ sau khi chuẩn hoá phải **lớn hơn** ngưỡng chấm của cả hai chiều. Cụ thể, gọi `nA` và `nB` là hai dạng chuẩn hoá, cặp chỉ hợp lệ khi:
+
+```
+levenshtein(nA, nB) > max(nguong(nA), nguong(nB))
+```
+
+trong đó `nguong(s)` là `1` nếu `s.length <= 8` và `2` nếu dài hơn.
+
+Ràng buộc này phải được kiểm ở hai nơi: một test chạy trên toàn bộ `word-bank.json` đóng gói sẵn, và một lần kiểm tra lúc người dùng thêm cặp từ của riêng họ, kèm thông báo giải thích tại sao cặp bị từ chối.
+
 ---
 
 ## 8. Dẫn chuyện và âm thanh
