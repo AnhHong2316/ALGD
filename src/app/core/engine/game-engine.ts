@@ -163,3 +163,49 @@ export function revealNextPlayer(state: GameState, rng: Rng): EngineResult {
 
   return startRound(dealt, rng);
 }
+
+/**
+ * Người đang nói bấm xong lượt.
+ *
+ * Cách đếm vòng: round bắt đầu từ 1 và là số thứ tự của vòng đang diễn ra.
+ * Khi người cuối cùng nói xong, nếu round đã đạt minRoundsBeforeVote thì mở
+ * vote ngay tại đây và round giữ nguyên; nếu chưa thì tăng round và mở vòng
+ * mới. Với mặc định 3, lần vote đầu tiên rơi vào cuối vòng 3.
+ */
+export function advanceSpeaker(state: GameState, rng: Rng): EngineResult {
+  if (state.phase !== 'SPEAKING') {
+    throw new Error('advanceSpeaker: chỉ gọi được ở pha nói');
+  }
+
+  const speakerIndex = state.speakerIndex + 1;
+
+  if (speakerIndex < state.speakingOrder.length) {
+    const next: GameState = { ...state, speakerIndex };
+    return {
+      state: next,
+      events: [
+        {
+          type: 'SPEAKER_TURN',
+          payload: { player: nameOf(next, next.speakingOrder[speakerIndex]) },
+        },
+      ],
+    };
+  }
+
+  if (state.round >= state.config.minRoundsBeforeVote) {
+    const next: GameState = {
+      ...state,
+      phase: 'VOTING',
+      tiedCandidateIds: [],
+      revoteUsed: false,
+    };
+    return {
+      state: next,
+      events: [
+        { type: 'VOTE_OPEN', payload: { village: next.villageName, round: next.round } },
+      ],
+    };
+  }
+
+  return startRound({ ...state, round: state.round + 1 }, rng);
+}

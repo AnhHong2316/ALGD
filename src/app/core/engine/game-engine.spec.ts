@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CardContent, DEFAULT_GAME_CONFIG, GameConfig, Player } from '../models';
 import {
+  advanceSpeaker,
   buildCard,
   createGame,
   NewGameInput,
@@ -29,6 +30,13 @@ function makeInput(overrides: Partial<NewGameInput> = {}): NewGameInput {
     // thay vì thay thế nguyên khối.
     config: { ...DEFAULT_GAME_CONFIG, ...overrides.config },
   };
+}
+
+function nameOfPlayer(
+  state: { players: Player[] },
+  playerId: string,
+): string {
+  return state.players.find((player) => player.id === playerId)!.name;
 }
 
 describe('createGame', () => {
@@ -241,5 +249,107 @@ describe('revealNextPlayer', () => {
     for (let i = 0; i < 4; i++) result = revealNextPlayer(result.state, rng);
 
     expect(() => revealNextPlayer(result.state, rng)).toThrow(/chia bài/);
+  });
+});
+
+describe('advanceSpeaker', () => {
+  /** Chia bài xong xuôi cho `count` người, trả về state ở pha nói vòng 1. */
+  function dealt(count: number, seed: number, config?: Partial<GameConfig>) {
+    const rng = createSeededRng(seed);
+    let result = createGame(
+      makeInput({
+        players: makePlayers(count),
+        rng,
+        config: { ...DEFAULT_GAME_CONFIG, ...config },
+      }),
+    );
+    for (let i = 0; i < count; i++) result = revealNextPlayer(result.state, rng);
+    return { state: result.state, rng };
+  }
+
+  it('đi qua từng người trong vòng và báo tên người kế tiếp', () => {
+    const { state, rng } = dealt(4, 21);
+
+    const result = advanceSpeaker(state, rng);
+    expect(result.state.speakerIndex).toBe(1);
+    expect(result.events).toEqual([
+      {
+        type: 'SPEAKER_TURN',
+        payload: { player: nameOfPlayer(state, state.speakingOrder[1]) },
+      },
+    ]);
+  });
+
+  it('hết vòng mà chưa đủ số vòng tối thiểu thì sang vòng tiếp theo', () => {
+    let { state, rng } = dealt(4, 21);
+
+    for (let i = 0; i < 4; i++) state = advanceSpeaker(state, rng).state;
+
+    expect(state.round).toBe(2);
+    expect(state.phase).toBe('SPEAKING');
+    expect(state.speakerIndex).toBe(0);
+  });
+
+  it('vote mở đúng ở cuối vòng 3 với thiết lập mặc định', () => {
+    let { state, rng } = dealt(4, 21);
+
+    // Vòng 1 và vòng 2 trôi qua, vẫn ở pha nói.
+    for (let round = 0; round < 2; round++) {
+      for (let i = 0; i < 4; i++) state = advanceSpeaker(state, rng).state;
+      expect(state.phase).toBe('SPEAKING');
+    }
+    expect(state.round).toBe(3);
+
+    // Ba người đầu của vòng 3 nói xong, vẫn chưa mở vote.
+    for (let i = 0; i < 3; i++) state = advanceSpeaker(state, rng).state;
+    expect(state.phase).toBe('SPEAKING');
+
+    // Người thứ tư nói xong thì vote mở ngay.
+    const opened = advanceSpeaker(state, rng);
+    expect(opened.state.phase).toBe('VOTING');
+    expect(opened.state.round).toBe(3);
+    expect(opened.events).toEqual([
+      { type: 'VOTE_OPEN', payload: { village: 'Ác Quỷ', round: 3 } },
+    ]);
+  });
+
+  it('tôn trọng thiết lập số vòng tối thiểu khác mặc định', () => {
+    let { state, rng } = dealt(4, 21, { minRoundsBeforeVote: 1 });
+
+    for (let i = 0; i < 4; i++) state = advanceSpeaker(state, rng).state;
+
+    expect(state.phase).toBe('VOTING');
+    expect(state.round).toBe(1);
+  });
+
+  it('mỗi vòng mới đều xáo lại thứ tự nói', () => {
+    const seen = new Set<string>();
+    for (let seed = 0; seed < 25; seed++) {
+      let { state, rng } = dealt(5, seed);
+      const first = state.speakingOrder.join(',');
+      for (let i = 0; i < 5; i++) state = advanceSpeaker(state, rng).state;
+      seen.add(`${first}|${state.speakingOrder.join(',')}`);
+    }
+    const differed = [...seen].filter((entry) => {
+      const [before, after] = entry.split('|');
+      return before !== after;
+    });
+    expect(differed.length).toBeGreaterThan(0);
+  });
+
+  it('mở vote thì xoá sạch dấu vết lượt vote trước', () => {
+    let { state, rng } = dealt(4, 21, { minRoundsBeforeVote: 1 });
+    state = { ...state, tiedCandidateIds: ['p0'], revoteUsed: true };
+
+    for (let i = 0; i < 4; i++) state = advanceSpeaker(state, rng).state;
+
+    expect(state.tiedCandidateIds).toEqual([]);
+    expect(state.revoteUsed).toBe(false);
+  });
+
+  it('báo lỗi khi gọi ngoài pha nói', () => {
+    const { state, rng } = dealt(4, 21);
+    const voting = { ...state, phase: 'VOTING' as const };
+    expect(() => advanceSpeaker(voting, rng)).toThrow(/pha nói/);
   });
 });
