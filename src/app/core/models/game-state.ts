@@ -31,6 +31,12 @@ export interface GameState {
   civilianWord: string;
   spyWord: string;
   players: Player[];
+  /**
+   * Toàn phần trên `players`: mọi id trong `players` và `aliveIds` chắc chắn
+   * có khoá tương ứng ở đây, vì bản đồ này chỉ được dựng một lần duy nhất
+   * trong `createGame`. Nhờ vậy nơi khác tra `assignments[id]` được mà không
+   * cần kiểm null. Ai sửa `createGame` phải giữ nguyên bất biến này.
+   */
   assignments: Record<string, Assignment>;
   dealtCount: number;
   /** Số thứ tự vòng đang diễn ra, bắt đầu từ 1. */

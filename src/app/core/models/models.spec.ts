@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_GAME_CONFIG,
   DEFAULT_SCORE_RULES,
+  GamePhase,
   GameState,
 } from './index';
 
@@ -48,5 +49,21 @@ describe('models', () => {
 
     expect(state.phase).toBe('DEALING');
     expect(state.assignments['a'].role).toBe('CIVILIAN');
+  });
+
+  it('hằng mặc định bị đóng băng nên không sửa trộm được', () => {
+    expect(() => {
+      (DEFAULT_GAME_CONFIG.topics as string[]).push('Động vật');
+    }).toThrow();
+
+    expect(() => {
+      (DEFAULT_GAME_CONFIG as { spyCount: number }).spyCount = 99;
+    }).toThrow();
+  });
+
+  it('không tồn tại pha SETUP', () => {
+    // @ts-expect-error 'SETUP' đã được bỏ khỏi GamePhase một cách có chủ đích
+    const phase: GamePhase = 'SETUP';
+    expect(phase).toBe('SETUP');
   });
 });
