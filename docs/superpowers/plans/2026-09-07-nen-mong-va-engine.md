@@ -3063,6 +3063,17 @@ interface PlayOptions {
    * thúc khi các lượt vote rốt cuộc có phân định.
    */
   forceTieCount?: number;
+  /**
+   * Luôn ép hoà khi chỉ còn đúng 2 người sống, để chạm vào nhánh bốc ngẫu
+   * nhiên. Khác với forceTieCount, tuỳ chọn này không phụ thuộc vào việc đã
+   * bỏ bao nhiêu lượt phiếu trước đó.
+   *
+   * Tuỳ chọn này sinh ra từ một phép thử đột biến: nếu chỉ có forceTieCount
+   * thì tới lúc ván còn 2 người, mọi lượt hoà bị ép đã dùng hết từ lâu, nên
+   * nhánh bốc ngẫu nhiên không bao giờ được chạm tới. Gỡ bỏ hẳn luật đó khỏi
+   * engine mà file test này vẫn xanh — tức là nó chưa hề kiểm thứ nó mang tên.
+   */
+  tieAtTwoAlive?: boolean;
 }
 
 /**
@@ -3110,7 +3121,9 @@ function playToEnd(
 
         const tally: Record<string, number> = {};
         const shouldTie =
-          votesCast < (options.forceTieCount ?? 0) && candidates.length >= 2;
+          candidates.length >= 2 &&
+          ((options.tieAtTwoAlive === true && current.aliveIds.length === 2) ||
+            votesCast < (options.forceTieCount ?? 0));
         votesCast++;
 
         if (shouldTie) {
@@ -3248,6 +3261,27 @@ describe('bất biến: ván luôn kết thúc', () => {
     expect(after.tiedCandidateIds).toEqual([]);
   });
 
+  it('hoà ở đúng nước cờ hai người cuối vẫn kết thúc, không treo', () => {
+    let reachedRandomTieBreak = 0;
+
+    for (let seed = 0; seed < 30; seed++) {
+      const { result, rng } = startGame(4, { spyCount: 1, hasWhite: true }, seed);
+      const ended = playToEnd(result.state, rng, { tieAtTwoAlive: true });
+
+      expect(ended.state.phase).toBe('ENDED');
+      expect(ended.state.outcome).not.toBeNull();
+
+      if (ended.state.eliminations.some((e) => e.byRandomTieBreak)) {
+        reachedRandomTieBreak++;
+      }
+    }
+
+    // Khẳng định nhánh bốc ngẫu nhiên thật sự được chạm tới. Không có dòng này
+    // thì test vẫn xanh kể cả khi nó chưa bao giờ đi tới nước cờ hai người,
+    // tức là chỉ lặp lại điều mà các test khác đã phủ.
+    expect(reachedRandomTieBreak).toBeGreaterThan(0);
+  });
+
   it('kết quả cuối cùng luôn nhất quán với trạng thái người sống', () => {
     for (let seed = 0; seed < 25; seed++) {
       const { result, rng } = startGame(5, { spyCount: 1, hasWhite: true }, seed);
@@ -3358,11 +3392,24 @@ git commit -m "test: them bat bien van luon ket thuc va khong ro ri tu bi mat"
 
 ---
 
+## Kiểm chứng cuối bằng phép thử đột biến
+
+Một bộ test toàn xanh chứng minh **một trong hai** điều: code đúng, hoặc test không đủ sức bắt lỗi. Chỉ có cách cố tình phá code mới phân biệt được. Sau khi mọi task xong, cố tình gây hai lỗi rồi kiểm tra xem test có đỏ:
+
+| Đột biến | Cách gây | Phải bị bắt bởi |
+|---|---|---|
+| Rò rỉ từ bí mật | Đổi `village: next.villageName` thành `village: next.civilianWord` trong `startRound` | Test "không sự kiện dẫn chuyện nào chứa từ..." |
+| Mất luật chống treo | Đổi `state.aliveIds.length === 2` thành `=== 999` trong `submitVotes` | Test "hoà ở đúng nước cờ hai người cuối..." với thông báo `Ván không kết thúc sau 1000 bước` |
+
+Nhớ hoàn nguyên bằng `git checkout -- src/app/core/engine/game-engine.ts` sau mỗi lần thử.
+
+Phép thử này đã từng phát hiện một lỗ thật: bản đầu của file bất biến **không** bắt được đột biến thứ hai, vì `forceTieCount` chỉ ép hoà ở vài lượt vote đầu, mà tới lúc ván còn 2 người thì đã dùng hết từ lâu. Đó là lý do có thêm `tieAtTwoAlive` và dòng `expect(reachedRandomTieBreak).toBeGreaterThan(0)`.
+
 ## Xong bản kế hoạch này thì có gì
 
 - Workspace Angular 21 chạy được, build được, test được.
 - Engine luật chơi hoàn chỉnh dưới dạng TypeScript thuần, không phụ thuộc Angular.
-- Bộ test phủ toàn bộ mục 3 và mục 11 của đặc tả, gồm hai bất biến quan trọng nhất: ván luôn kết thúc trên mọi nhánh, và không sự kiện dẫn chuyện nào làm lộ từ bí mật.
+- Bộ test phủ toàn bộ mục 3 và mục 11 của đặc tả, gồm hai bất biến quan trọng nhất: ván luôn kết thúc trên mọi nhánh, và không sự kiện dẫn chuyện nào làm lộ từ bí mật — cả hai đã được chứng minh là bắt được lỗi thật, không phải xanh cho có.
 
 ## Bản kế hoạch tiếp theo
 
