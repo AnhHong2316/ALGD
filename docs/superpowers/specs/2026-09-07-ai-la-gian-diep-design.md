@@ -25,6 +25,7 @@ Chế độ nhiều máy có phòng · xuất/nhập kho từ · thống kê nâ
 | Mô hình chơi | Một máy chuyền tay (pass-and-play), offline hoàn toàn |
 | Nguồn cặp từ | Kho đóng gói sẵn trong app + cho phép người dùng tự thêm |
 | Mức độ trọng tài | App dẫn đầy đủ từng bước và tự xử lý luật |
+| Chế độ Bật mí | Công tắc cho gián điệp biết mình là gián điệp. Mặc định tắt. Không cho biết đồng đội |
 | Tính điểm | Theo vai, sửa được trong Cài đặt |
 | Công nghệ | Angular (standalone components) + Capacitor → xuất APK Android |
 | Giọng đọc | TTS sẵn có của thiết bị (vi-VN) + một vài file hiệu ứng ngắn |
@@ -38,12 +39,32 @@ Phần này là nguồn chân lý duy nhất cho engine. Mọi câu ở đây ph
 ### 3.1 Vai
 
 - **Dân làng** — nhận từ A.
-- **Gián điệp** — nhận từ B (tương đồng với A). Gián điệp *có từ*, nhưng không biết mình là gián điệp và không biết từ của dân làng.
-- **Mũ trắng** — không nhận từ nào. Biết mình là mũ trắng.
+- **Gián điệp** — nhận từ B, tương đồng với A. Gián điệp *có từ*, và không bao giờ biết từ của dân làng.
+- **Mũ trắng** — không nhận từ nào. Luôn biết mình là mũ trắng, vì không có từ thì không thể không biết.
 
 Số mũ trắng tối đa là 1, và có thể tắt.
 
-### 3.2 Ràng buộc đội hình
+### 3.2 Chế độ Bật mí
+
+Một công tắc ở màn cấu hình, quyết định **gián điệp có được cho biết mình là gián điệp hay không**. Mặc định tắt.
+
+| | Bật mí **tắt** (mặc định) | Bật mí **bật** |
+|---|---|---|
+| Thẻ của dân làng | Chỉ hiện từ, không ghi vai | Chỉ hiện từ, không ghi vai |
+| Thẻ của gián điệp | Chỉ hiện từ, không ghi vai | Hiện từ **kèm dòng "Bạn là GIÁN ĐIỆP"** |
+| Thẻ của mũ trắng | "Bạn là MŨ TRẮNG — không có từ nào" | Như bên trái |
+
+Khi Bật mí tắt, thẻ của dân làng và thẻ của gián điệp phải **giống hệt nhau về mọi mặt** — cùng bố cục, cùng màu, cùng chữ, chỉ khác đúng cái từ. Không được có bất kỳ dấu hiệu nào cho phép suy ra vai: không đổi màu viền, không đổi icon, không khác nhau về thời gian tải. Đây là ràng buộc bắt buộc, vì lộ ở đây là hỏng cả ván.
+
+**Gián điệp không bao giờ biết đồng đội của mình là ai**, kể cả khi Bật mí đang bật. Ván có 2–3 gián điệp thì họ vẫn có thể vote nhầm nhau.
+
+Chế độ này chỉ đổi phần thông tin lúc chia bài. Nó **không** đổi luật thắng thua, cách vote, hay cách tính điểm.
+
+Ghi chú cân bằng: bật chế độ này làm gián điệp mạnh lên rõ rệt, vì họ khỏi mất một hai vòng để tự nhận ra mình lạc đàn và có thể đi lừa ngay từ câu đầu. Điểm thưởng của gián điệp vẫn để nguyên mặc định `+2`; nếu nhóm thấy lệch thì hạ xuống `+1` trong Cài đặt.
+
+App ghi nhớ lựa chọn Bật mí của ván gần nhất và điền sẵn cho ván sau.
+
+### 3.3 Ràng buộc đội hình
 
 - Tối thiểu 4 người chơi. Nếu bật mũ trắng thì tối thiểu 5.
 - Tối đa 12 người chơi.
@@ -71,7 +92,7 @@ Cột "Gợi ý" là giá trị app điền sẵn cho vui và cân bằng, khôn
 
 App tự tính lại giá trị hợp lệ mỗi khi sĩ số hoặc công tắc mũ trắng thay đổi. Nếu số gián điệp đang chọn vượt mức tối đa mới thì app tự kéo về mức tối đa và báo cho người dùng biết. Nút "Bắt đầu" bị vô hiệu khi cấu hình sai.
 
-### 3.3 Diễn tiến ván
+### 3.4 Diễn tiến ván
 
 1. **Chia bài** — mỗi người lần lượt cầm máy xem vai và từ của mình.
 2. **Vòng nói** — app random thứ tự nói trong số người còn sống, random lại ở mỗi vòng. Mỗi người nói một câu mô tả từ của mình.
@@ -83,7 +104,7 @@ Số vòng đã hoàn tất bằng `round - 1` khi đang ở giữa một vòng,
 4. **Lộ danh tính** — lật vai người vừa bị loại.
 5. **Kiểm tra kết thúc** — nếu chưa ngã ngũ, quay lại bước 2.
 
-### 3.4 Điều kiện kết thúc
+### 3.5 Điều kiện kết thúc
 
 Kiểm tra theo đúng thứ tự này sau mỗi lần loại người:
 
@@ -94,7 +115,7 @@ Kiểm tra theo đúng thứ tự này sau mỗi lần loại người:
 
 Hệ quả cần lưu ý: nếu đã loại hết gián điệp nhưng mũ trắng vẫn còn sống thì ván **chưa** kết thúc, dân làng phải loại nốt mũ trắng.
 
-### 3.5 Mũ trắng đoán từ
+### 3.6 Mũ trắng đoán từ
 
 Khi mũ trắng bị loại, app mở ngay ô nhập để đoán **từ của dân làng**. Đúng thì mũ trắng thắng một mình và ván dừng ngay, kể cả khi các điều kiện khác cũng đang thoả. Sai thì mũ trắng rời ván, trận đấu tiếp tục.
 
@@ -108,7 +129,7 @@ Mũ trắng chỉ có đúng một lượt đoán trong cả ván.
 
 Ví dụ: `"Con Mèo"`, `"con meo"`, `"con mèo "` đều được chấm đúng cho đáp án `"con mèo"`.
 
-### 3.6 Xử lý hoà phiếu
+### 3.7 Xử lý hoà phiếu
 
 Khi có từ hai người trở lên cùng số phiếu cao nhất, app cho quản trò chọn một trong hai:
 
@@ -119,7 +140,7 @@ Cả hai trường hợp đều quay về vòng nói và `round` tiếp tục t�
 
 `revoteUsed` được đặt lại về `false` mỗi khi bước vào một lượt vote mới, nên mỗi lượt vote đều có quyền bỏ phiếu lại một lần. Khi bỏ phiếu lại, chỉ những người trong `tiedCandidateIds` mới được nhận phiếu.
 
-### 3.7 Tính điểm
+### 3.8 Tính điểm
 
 Điểm mặc định, sửa được trong Cài đặt:
 
@@ -170,6 +191,7 @@ interface EngineResult {
 }
 
 createGame(input: NewGameInput): EngineResult
+buildCard(state, playerId): CardContent      // nội dung thẻ chia bài, xem mục 6.4
 revealNextPlayer(state): EngineResult        // chia bài, chuyển sang người kế
 startRound(state, rng): EngineResult         // random thứ tự nói
 advanceSpeaker(state): EngineResult
@@ -219,6 +241,7 @@ interface Player {
 interface GameConfig {
   spyCount: number;
   hasWhite: boolean;
+  revealSpyToSpy: boolean;       // chế độ Bật mí, mặc định false
   topics: string[];         // rỗng = tất cả chủ đề đang bật
   difficulties: WordPair['difficulty'][];
   timerSeconds: number | null;   // null = tắt đồng hồ
@@ -297,8 +320,9 @@ Nhập tên từng người, kéo thả để đổi thứ tự, xoá. Có nút 
 ### 6.3 Cấu hình ván
 
 - **Tên làng** — ô nhập tuỳ chọn, kèm nút 🎲 bốc ngẫu nhiên từ danh sách vui có sẵn. Có công tắc "giữ tên này cho ván sau".
-- **Số gián điệp** — bộ chọn, tự giới hạn theo bảng ở mục 3.2, hiện rõ lý do khi một giá trị bị chặn.
+- **Số gián điệp** — bộ chọn, tự giới hạn theo bảng ở mục 3.3, hiện rõ lý do khi một giá trị bị chặn.
 - **Mũ trắng** — công tắc bật/tắt.
+- **Bật mí** — công tắc bật/tắt, kèm một dòng giải thích ngắn ngay dưới: "Gián điệp sẽ biết mình là gián điệp. Ván sẽ dễ hơn cho gián điệp." Điền sẵn theo lựa chọn của ván gần nhất.
 - **Chủ đề và độ khó** — chọn nhiều.
 - **Đồng hồ mỗi lượt nói** — mặc định 30 giây, tắt được.
 
@@ -312,7 +336,26 @@ Nút "Bắt đầu" bị vô hiệu khi cấu hình chưa hợp lệ.
 - Từ và vai chỉ hiện khi **nhấn giữ** vào thẻ. Thả tay ra là che lại ngay lập tức.
 - Bấm "Tôi đã xem" để chuyển sang người tiếp theo.
 - **Không cho quay lui.** Nút back của hệ thống bị chặn ở màn này.
-- Với mũ trắng, thẻ hiện "Bạn là MŨ TRẮNG — không có từ nào".
+
+Nội dung thẻ do một hàm thuần trong engine dựng ra, không do component tự quyết định:
+
+```ts
+interface CardContent {
+  roleLabel: string | null;   // null = không hiện dòng vai nào
+  word: string | null;        // null = mũ trắng
+  note: string | null;
+}
+
+buildCard(state: GameState, playerId: string): CardContent
+```
+
+| Vai | Bật mí tắt | Bật mí bật |
+|---|---|---|
+| Dân làng | `roleLabel: null`, `word: "con mèo"` | Giống hệt cột trái |
+| Gián điệp | `roleLabel: null`, `word: "con chó"` | `roleLabel: "Bạn là GIÁN ĐIỆP"`, `word: "con chó"` |
+| Mũ trắng | `roleLabel: "Bạn là MŨ TRẮNG"`, `word: null`, `note: "Bạn không có từ nào"` | Giống hệt cột trái |
+
+Khi Bật mí tắt, thẻ dân làng và thẻ gián điệp phải giống nhau tới từng chi tiết dựng hình. Component render thẻ **chỉ được đọc `CardContent`**, không được đụng tới `Assignment.role`. Nhờ vậy không thể vô tình thêm một khác biệt nhỏ nào theo vai, và luật che giấu kiểm được bằng unit test thay vì phải soi mắt thường trên giao diện.
 
 ### 6.5 Vòng nói
 
@@ -427,7 +470,7 @@ Toàn bộ dữ liệu nằm trên máy qua Capacitor Preferences. Không có g�
 | `customPairs` | Cặp từ người dùng tự thêm |
 | `hiddenPairIds` | Id các cặp gốc đã bị ẩn |
 | `usedPairIds` | Lịch sử cặp đã dùng, để chống lặp |
-| `settings` | Âm thanh, tốc độ đọc, điểm theo vai, đồng hồ, số vòng tối thiểu |
+| `settings` | Âm thanh, tốc độ đọc, điểm theo vai, đồng hồ, số vòng tối thiểu, lựa chọn Bật mí gần nhất |
 | `scoreboard` | Điểm tích luỹ và lịch sử các ván |
 | `activeGame` | State của ván đang dở, để khôi phục |
 
@@ -461,8 +504,9 @@ Vì engine là TypeScript thuần nên toàn bộ luật ở mục 3 kiểm đư
 
 ### Bắt buộc phải phủ
 
-- **Điều kiện kết thúc** — cả bốn nhánh ở mục 3.4, gồm cả ca "hết gián điệp nhưng mũ trắng còn sống thì chưa kết thúc" và ca "mũ trắng đoán đúng thắng đè lên mọi điều kiện khác".
-- **Validate đội hình** — quét mọi sĩ số từ 4 đến 12, có và không có mũ trắng, khẳng định đúng khớp bảng ở mục 3.2.
+- **Điều kiện kết thúc** — cả bốn nhánh ở mục 3.5, gồm cả ca "hết gián điệp nhưng mũ trắng còn sống thì chưa kết thúc" và ca "mũ trắng đoán đúng thắng đè lên mọi điều kiện khác".
+- **Validate đội hình** — quét mọi sĩ số từ 4 đến 12, có và không có mũ trắng, khẳng định đúng khớp bảng ở mục 3.3.
+- **Nội dung thẻ chia bài** — với cả hai chế độ Bật mí, kiểm tra nội dung thẻ của từng vai đúng như bảng ở mục 3.2. Đặc biệt: khi Bật mí tắt, thẻ dân làng và thẻ gián điệp phải **giống hệt nhau ngoài đúng cái từ**, khẳng định bằng cách so sánh toàn bộ dữ liệu dựng thẻ chứ không chỉ so phần chữ hiển thị.
 - **Xử phiếu** — trường hợp thường, hoà hai người, hoà nhiều người, bỏ phiếu lại vẫn hoà, tổng phiếu không hợp lệ.
 - **Chấm đoán từ** — có dấu, không dấu, sai chính tả nhẹ, thừa khoảng trắng, khác hoàn toàn.
 - **Bốc cặp từ** — không lặp cho tới khi hết kho, có hoán đổi từ dân/gián điệp, xử đúng khi bộ lọc rỗng.
