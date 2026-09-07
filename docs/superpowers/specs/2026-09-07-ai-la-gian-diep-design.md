@@ -110,12 +110,17 @@ Số vòng đã hoàn tất bằng `round - 1` khi đang ở giữa một vòng,
 
 Kiểm tra theo đúng thứ tự này sau mỗi lần loại người:
 
-1. **Mũ trắng thắng** — mũ trắng bị loại và đoán đúng từ của dân làng. Ván dừng ngay lập tức.
-2. **Gián điệp thắng** — `soGianDiepConSong >= soNguoiConSongKhongPhaiGianDiep`.
-3. **Dân làng thắng** — không còn gián điệp nào sống **và** không còn mũ trắng nào sống.
-4. Không thoả điều kiện nào → ván tiếp tục.
+1. **Mũ trắng thắng bằng đoán từ** — mũ trắng bị loại và đoán đúng từ của dân làng. Ván dừng ngay lập tức.
+2. **Mũ trắng thắng bằng sống sót** — mũ trắng là người duy nhất còn sống.
+3. **Gián điệp thắng** — `soGianDiepConSong >= soNguoiConSongKhongPhaiGianDiep`.
+4. **Dân làng thắng** — không còn gián điệp nào sống **và** không còn mũ trắng nào sống.
+5. Không thoả điều kiện nào → ván tiếp tục.
 
 Hệ quả cần lưu ý: nếu đã loại hết gián điệp nhưng mũ trắng vẫn còn sống thì ván **chưa** kết thúc, dân làng phải loại nốt mũ trắng.
+
+Điều kiện 2 tồn tại để bịt một nhánh treo có thật. Khi chỉ còn 1 dân làng và 1 mũ trắng, luật bốc ngẫu nhiên ở mục 3.7 có thể loại đúng người dân, để lại mình mũ trắng còn sống. Lúc đó điều kiện 3 không thoả vì không còn gián điệp nào, điều kiện 4 cũng không thoả vì mũ trắng vẫn sống, và ván sẽ kẹt vĩnh viễn với đúng một người. Cho mũ trắng thắng ở đây vừa hợp lý về mặt trò chơi — sống sót tới cuối cùng thì xứng đáng — vừa đảm bảo mọi nhánh đều kết thúc.
+
+Kết hợp lại, sau mỗi lần loại người thì trạng thái còn đúng một người sống luôn kết thúc ván: người đó là gián điệp thì điều kiện 3 thoả, là dân làng thì điều kiện 4 thoả, là mũ trắng thì điều kiện 2 thoả.
 
 ### 3.6 Mũ trắng đoán từ
 
@@ -154,11 +159,11 @@ Trạng thái này chỉ xuất hiện khi đã loại hết gián điệp mà m
 |---|---|
 | Dân làng thắng | +1 cho mỗi dân làng |
 | Gián điệp thắng | +2 cho mỗi gián điệp |
-| Mũ trắng đoán đúng | +3 cho mũ trắng |
+| Mũ trắng thắng, bằng đoán từ hoặc bằng sống sót | +3 cho mũ trắng |
 
 Điểm trao cho **mọi người chơi thuộc phe thắng, kể cả người đã bị loại**. Phe thua không được điểm.
 
-Mũ trắng **không thuộc phe dân làng, cũng không thuộc phe gián điệp**. Mũ trắng chỉ có đúng một cách ghi điểm là tự đoán trúng từ của dân làng. Khi mũ trắng thắng thì chỉ mình mũ trắng được điểm, dân làng và gián điệp đều không được gì. Ngược lại, khi dân làng hoặc gián điệp thắng thì mũ trắng không được điểm.
+Mũ trắng **không thuộc phe dân làng, cũng không thuộc phe gián điệp**. Mũ trắng ghi điểm theo đúng một cách: `outcome` của ván là `WHITE`, bất kể thắng bằng đoán trúng từ hay bằng sống sót tới cuối. Khi mũ trắng thắng thì chỉ mình mũ trắng được điểm, dân làng và gián điệp đều không được gì. Ngược lại, khi dân làng hoặc gián điệp thắng thì mũ trắng không được điểm.
 
 ---
 
@@ -197,20 +202,20 @@ interface EngineResult {
 }
 
 createGame(input: NewGameInput): EngineResult
-buildCard(state, playerId): CardContent      // nội dung thẻ chia bài, xem mục 6.4
-revealNextPlayer(state): EngineResult        // chia bài, chuyển sang người kế
-startRound(state, rng): EngineResult         // random thứ tự nói
-advanceSpeaker(state): EngineResult
-openVoting(state): EngineResult
-submitVotes(state, tally: Record<string, number>): EngineResult
-resolveTie(state, choice: 'REVOTE' | 'NO_ELIMINATION'): EngineResult
+buildCard(state, playerId): CardContent                       // mục 6.4
+revealNextPlayer(state, rng): EngineResult                    // chia bài, chuyển người kế
+advanceSpeaker(state, rng): EngineResult                      // hết vòng thì tự mở vote nếu đủ điều kiện
+submitVotes(state, tally: Record<string, number>, rng): EngineResult
+resolveTie(state, choice: 'REVOTE' | 'NO_ELIMINATION', rng): EngineResult
 submitWhiteGuess(state, text: string): EngineResult
-continueAfterReveal(state): EngineResult
+continueAfterReveal(state, rng): EngineResult
 ```
 
 Engine không import gì từ Angular, không đụng tới `localStorage`, không phát ra âm thanh. Điều này khiến toàn bộ luật ở mục 3 test được bằng unit test thuần.
 
-Nguồn ngẫu nhiên (`rng`) được truyền vào từ ngoài để test có thể cắm hàm giả và cho kết quả lặp lại được.
+Nguồn ngẫu nhiên (`rng`) được truyền vào theo từng lời gọi thay vì giữ trong state, để engine vẫn là hàm thuần và test cắm được nguồn ngẫu nhiên có hạt giống cho kết quả lặp lại được.
+
+Không có hành động `openVoting` riêng. Việc mở vote là hệ quả tất yếu của việc người cuối cùng nói xong ở một vòng đã đủ điều kiện, nên `advanceSpeaker` tự chuyển sang `VOTING`. Thêm một hành động riêng chỉ tạo thêm một trạng thái trung gian mà không ai cần.
 
 ### 4.2 Tầng dẫn chuyện
 
@@ -223,8 +228,10 @@ Nguồn ngẫu nhiên (`rng`) được truyền vào từ ngoài để test có 
 ```ts
 type Role = 'CIVILIAN' | 'SPY' | 'WHITE';
 
+// Không có 'SETUP': trước khi bấm Bắt đầu thì chưa tồn tại GameState nào,
+// nên đó là trạng thái của màn hình chứ không phải của ván.
 type GamePhase =
-  | 'SETUP' | 'DEALING' | 'SPEAKING' | 'VOTING'
+  | 'DEALING' | 'SPEAKING' | 'VOTING'
   | 'TIE_BREAK' | 'REVEAL' | 'WHITE_GUESS' | 'ENDED';
 
 type Outcome = 'CIVILIANS' | 'SPIES' | 'WHITE';
@@ -264,6 +271,7 @@ interface Elimination {
   round: number;
   playerId: string;
   role: Role;
+  byRandomTieBreak: boolean;   // true khi bị loại do bốc ngẫu nhiên ở mục 3.7
 }
 
 interface GameState {
@@ -295,9 +303,10 @@ interface GameState {
 type NarrationEventType =
   | 'GAME_START' | 'PASS_DEVICE' | 'ROUND_START' | 'SPEAKER_TURN'
   | 'TIME_ALMOST_UP' | 'VOTE_OPEN' | 'VOTE_TIE' | 'NO_ELIMINATION'
+  | 'RANDOM_TIE_BREAK'
   | 'CIVILIAN_KILLED' | 'SPY_CAUGHT' | 'WHITE_REVEALED'
   | 'WHITE_GUESS_CORRECT' | 'WHITE_GUESS_WRONG'
-  | 'CIVILIANS_WIN' | 'SPIES_WIN';
+  | 'CIVILIANS_WIN' | 'SPIES_WIN' | 'WHITE_WIN';
 
 interface NarrationEvent {
   type: NarrationEventType;
@@ -496,6 +505,7 @@ Toàn bộ dữ liệu nằm trên máy qua Capacitor Preferences. Không có g�
 | Mũ trắng đoán đúng | Ván dừng ngay, mũ trắng thắng một mình, các điều kiện khác bị bỏ qua |
 | Mũ trắng đoán sai | Rời ván, trận tiếp tục |
 | Hết gián điệp nhưng mũ trắng còn sống | Ván chưa kết thúc |
+| Chỉ còn mũ trắng sống một mình | Mũ trắng thắng, ván kết thúc. Bịt nhánh treo với đúng một người sống |
 | Bấm back ở màn chia bài | Chặn hoàn toàn, đã xem là không mở lại được |
 | Thoát app giữa ván | Khôi phục từ `activeGame` khi mở lại |
 | Thiết bị không có giọng vi-VN | Báo một lần, tự hạ xuống `SFX_ONLY` |
@@ -511,7 +521,7 @@ Vì engine là TypeScript thuần nên toàn bộ luật ở mục 3 kiểm đư
 
 ### Bắt buộc phải phủ
 
-- **Điều kiện kết thúc** — cả bốn nhánh ở mục 3.5, gồm cả ca "hết gián điệp nhưng mũ trắng còn sống thì chưa kết thúc" và ca "mũ trắng đoán đúng thắng đè lên mọi điều kiện khác".
+- **Điều kiện kết thúc** — cả năm nhánh ở mục 3.5, gồm ca "hết gián điệp nhưng mũ trắng còn sống thì chưa kết thúc", ca "mũ trắng đoán đúng thắng đè lên mọi điều kiện khác", và ca "chỉ còn mũ trắng sống một mình thì mũ trắng thắng".
 - **Validate đội hình** — quét mọi sĩ số từ 4 đến 12, có và không có mũ trắng, khẳng định đúng khớp bảng ở mục 3.3. Có một test riêng cho đội hình nhỏ nhất **4 người có mũ trắng** (2 dân + 1 gián điệp + 1 mũ trắng), vì đây là ca dễ bị chặn nhầm nhất.
 - **Nội dung thẻ chia bài** — với cả hai chế độ Bật mí, kiểm tra nội dung thẻ của từng vai đúng như bảng ở mục 3.2. Đặc biệt: khi Bật mí tắt, thẻ dân làng và thẻ gián điệp phải **giống hệt nhau ngoài đúng cái từ**, khẳng định bằng cách so sánh toàn bộ dữ liệu dựng thẻ chứ không chỉ so phần chữ hiển thị.
 - **Xử phiếu** — trường hợp thường, hoà hai người, hoà nhiều người, bỏ phiếu lại vẫn hoà, tổng phiếu không hợp lệ, và ca hoà khi chỉ còn 2 người sống thì phải bốc ngẫu nhiên chứ không được để không loại ai.
