@@ -1,0 +1,178 @@
+import { describe, expect, it } from 'vitest';
+import { CardContent, DEFAULT_GAME_CONFIG, GameConfig, Player } from '../models';
+import { buildCard, createGame, NewGameInput } from './game-engine';
+import { createSeededRng } from './rng';
+
+const PAIR = { id: 'pair-1', civilianWord: 'con mèo', spyWord: 'con chó' };
+
+function makePlayers(count: number): Player[] {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `p${index}`,
+    name: `Người ${index}`,
+  }));
+}
+
+function makeInput(overrides: Partial<NewGameInput> = {}): NewGameInput {
+  return {
+    gameId: 'g1',
+    villageName: 'Ác Quỷ',
+    players: makePlayers(6),
+    pair: PAIR,
+    rng: createSeededRng(2026),
+    ...overrides,
+    // Đặt sau cùng để cấu hình truyền vào luôn được trộn với mặc định,
+    // thay vì thay thế nguyên khối.
+    config: { ...DEFAULT_GAME_CONFIG, ...overrides.config },
+  };
+}
+
+describe('createGame', () => {
+  it('phát đúng số lượng từng vai', () => {
+    const { state } = createGame(
+      makeInput({ config: { ...DEFAULT_GAME_CONFIG, spyCount: 2, hasWhite: true } }),
+    );
+
+    const roles = Object.values(state.assignments).map((a) => a.role);
+    expect(roles.filter((r) => r === 'SPY')).toHaveLength(2);
+    expect(roles.filter((r) => r === 'WHITE')).toHaveLength(1);
+    expect(roles.filter((r) => r === 'CIVILIAN')).toHaveLength(3);
+  });
+
+  it('phát từ đúng theo vai, mũ trắng không có từ', () => {
+    const { state } = createGame(
+      makeInput({ config: { ...DEFAULT_GAME_CONFIG, spyCount: 1, hasWhite: true } }),
+    );
+
+    for (const assignment of Object.values(state.assignments)) {
+      if (assignment.role === 'WHITE') expect(assignment.word).toBeNull();
+      else if (assignment.role === 'SPY') expect(assignment.word).toBe('con chó');
+      else expect(assignment.word).toBe('con mèo');
+    }
+  });
+
+  it('bắt đầu ở pha chia bài, vòng 1, mọi người còn sống', () => {
+    const { state } = createGame(makeInput());
+
+    expect(state.phase).toBe('DEALING');
+    expect(state.round).toBe(1);
+    expect(state.dealtCount).toBe(0);
+    expect(state.aliveIds).toHaveLength(6);
+    expect(state.outcome).toBeNull();
+  });
+
+  it('phát sự kiện mở ván và sự kiện chuyền máy cho người đầu tiên', () => {
+    const { events } = createGame(makeInput());
+
+    expect(events[0]).toEqual({
+      type: 'GAME_START',
+      payload: { village: 'Ác Quỷ' },
+    });
+    expect(events[1]).toEqual({
+      type: 'PASS_DEVICE',
+      payload: { player: 'Người 0' },
+    });
+  });
+
+  it('cùng hạt giống thì chia vai giống hệt nhau', () => {
+    const first = createGame(makeInput({ rng: createSeededRng(7) }));
+    const second = createGame(makeInput({ rng: createSeededRng(7) }));
+
+    expect(first.state.assignments).toEqual(second.state.assignments);
+  });
+
+  it('không phải lúc nào người đầu danh sách cũng nhận cùng một vai', () => {
+    const roles = new Set<string>();
+    for (let seed = 0; seed < 40; seed++) {
+      const { state } = createGame(makeInput({ rng: createSeededRng(seed) }));
+      roles.add(state.assignments['p0'].role);
+    }
+    expect(roles.size).toBeGreaterThan(1);
+  });
+
+  it('từ chối đội hình không hợp lệ', () => {
+    expect(() =>
+      createGame(
+        makeInput({
+          players: makePlayers(6),
+          config: { ...DEFAULT_GAME_CONFIG, spyCount: 3 },
+        }),
+      ),
+    ).toThrow(/tối đa 2 gián điệp/);
+  });
+
+  it('từ chối khi dưới 4 người', () => {
+    expect(() => createGame(makeInput({ players: makePlayers(3) }))).toThrow(
+      /ít nhất 4 người/,
+    );
+  });
+});
+
+describe('buildCard', () => {
+  function cardsByRole(revealSpyToSpy: boolean) {
+    const { state } = createGame(
+      makeInput({
+        rng: createSeededRng(5),
+        config: { ...DEFAULT_GAME_CONFIG, spyCount: 1, hasWhite: true, revealSpyToSpy },
+      }),
+    );
+
+    const find = (role: string) =>
+      Object.values(state.assignments).find((a) => a.role === role)!.playerId;
+
+    return {
+      civilian: buildCard(state, find('CIVILIAN')),
+      spy: buildCard(state, find('SPY')),
+      white: buildCard(state, find('WHITE')),
+    };
+  }
+
+  it('Bật mí tắt: thẻ dân làng và thẻ gián điệp chỉ khác đúng cái từ', () => {
+    const { civilian, spy } = cardsByRole(false);
+
+    expect(civilian).toEqual({ roleLabel: null, word: 'con mèo', note: null });
+    expect(spy).toEqual({ roleLabel: null, word: 'con chó', note: null });
+
+    // So sánh toàn bộ dữ liệu dựng thẻ sau khi trung hoà trường từ:
+    // mọi trường còn lại phải trùng khớp tuyệt đối.
+    const withoutWord = (card: CardContent): CardContent => ({ ...card, word: null });
+    expect(withoutWord(civilian)).toEqual(withoutWord(spy));
+  });
+
+  it('Bật mí bật: cả hai vai đều được ghi nhãn, bố cục vẫn giống nhau', () => {
+    const { civilian, spy } = cardsByRole(true);
+
+    expect(civilian).toEqual({
+      roleLabel: 'Bạn là DÂN LÀNG',
+      word: 'con mèo',
+      note: null,
+    });
+    expect(spy).toEqual({
+      roleLabel: 'Bạn là GIÁN ĐIỆP',
+      word: 'con chó',
+      note: null,
+    });
+
+    // Cùng hình dạng: cùng tập trường, cùng trường nào có giá trị và trường nào null.
+    const shape = (card: CardContent) =>
+      Object.fromEntries(
+        Object.entries(card).map(([key, value]) => [key, value === null]),
+      );
+    expect(shape(civilian)).toEqual(shape(spy));
+  });
+
+  it('mũ trắng luôn biết mình là mũ trắng, ở cả hai chế độ', () => {
+    const expected = {
+      roleLabel: 'Bạn là MŨ TRẮNG',
+      word: null,
+      note: 'Bạn không có từ nào',
+    };
+
+    expect(cardsByRole(false).white).toEqual(expected);
+    expect(cardsByRole(true).white).toEqual(expected);
+  });
+
+  it('báo lỗi khi hỏi thẻ của người không tồn tại', () => {
+    const { state } = createGame(makeInput());
+    expect(() => buildCard(state, 'khong-co-ai')).toThrow();
+  });
+});

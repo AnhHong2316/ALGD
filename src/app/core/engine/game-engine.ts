@@ -1,0 +1,117 @@
+import {
+  Assignment,
+  CardContent,
+  GameConfig,
+  GameState,
+  NarrationEvent,
+  Player,
+  Role,
+} from '../models';
+import { Rng, shuffle } from './rng';
+import { validateTeam } from './team-rules';
+
+export interface EngineResult {
+  state: GameState;
+  events: NarrationEvent[];
+}
+
+export interface NewGameInput {
+  gameId: string;
+  villageName: string;
+  players: Player[];
+  config: GameConfig;
+  pair: { id: string; civilianWord: string; spyWord: string };
+  rng: Rng;
+}
+
+function buildRoleDeck(config: GameConfig, playerCount: number): Role[] {
+  const deck: Role[] = [];
+  for (let i = 0; i < config.spyCount; i++) deck.push('SPY');
+  if (config.hasWhite) deck.push('WHITE');
+  while (deck.length < playerCount) deck.push('CIVILIAN');
+  return deck;
+}
+
+export function createGame(input: NewGameInput): EngineResult {
+  const { players, config, pair } = input;
+
+  const validation = validateTeam(players.length, config.spyCount, config.hasWhite);
+  if (!validation.valid) throw new Error(validation.reason);
+
+  const deck = shuffle(input.rng, buildRoleDeck(config, players.length));
+
+  const assignments: Record<string, Assignment> = {};
+  players.forEach((player, index) => {
+    const role = deck[index];
+    assignments[player.id] = {
+      playerId: player.id,
+      role,
+      word:
+        role === 'WHITE'
+          ? null
+          : role === 'SPY'
+            ? pair.spyWord
+            : pair.civilianWord,
+    };
+  });
+
+  const state: GameState = {
+    id: input.gameId,
+    villageName: input.villageName,
+    config,
+    pairId: pair.id,
+    civilianWord: pair.civilianWord,
+    spyWord: pair.spyWord,
+    players: [...players],
+    assignments,
+    dealtCount: 0,
+    round: 1,
+    speakingOrder: [],
+    speakerIndex: 0,
+    aliveIds: players.map((player) => player.id),
+    eliminations: [],
+    tiedCandidateIds: [],
+    revoteUsed: false,
+    whiteGuess: null,
+    phase: 'DEALING',
+    outcome: null,
+  };
+
+  return {
+    state,
+    events: [
+      { type: 'GAME_START', payload: { village: state.villageName } },
+      { type: 'PASS_DEVICE', payload: { player: players[0].name } },
+    ],
+  };
+}
+
+/**
+ * Nội dung thẻ chia bài. Component render CHỈ được đọc kết quả của hàm này.
+ * Khi tắt Bật mí, thẻ dân làng và thẻ gián điệp trả về cùng hình dạng và chỉ
+ * khác đúng trường word, nên không thể suy ra vai từ thẻ.
+ */
+export function buildCard(state: GameState, playerId: string): CardContent {
+  const assignment = state.assignments[playerId];
+  if (!assignment) {
+    throw new Error(`buildCard: không tìm thấy người chơi ${playerId}`);
+  }
+
+  if (assignment.role === 'WHITE') {
+    return {
+      roleLabel: 'Bạn là MŨ TRẮNG',
+      word: null,
+      note: 'Bạn không có từ nào',
+    };
+  }
+
+  if (!state.config.revealSpyToSpy) {
+    return { roleLabel: null, word: assignment.word, note: null };
+  }
+
+  return {
+    roleLabel: assignment.role === 'SPY' ? 'Bạn là GIÁN ĐIỆP' : 'Bạn là DÂN LÀNG',
+    word: assignment.word,
+    note: null,
+  };
+}
