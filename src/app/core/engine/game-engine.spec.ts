@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { CardContent, DEFAULT_GAME_CONFIG, GameConfig, Player } from '../models';
+import { CardContent, DEFAULT_GAME_CONFIG, GameConfig, Player, Role } from '../models';
 import {
   advanceSpeaker,
   buildCard,
   createGame,
   NewGameInput,
   revealNextPlayer,
+  submitVotes,
 } from './game-engine';
 import { createSeededRng } from './rng';
+import { makeState } from './testing/make-state';
 
 const PAIR = { id: 'pair-1', civilianWord: 'con mèo', spyWord: 'con chó' };
 
@@ -351,5 +353,110 @@ describe('advanceSpeaker', () => {
     const { state, rng } = dealt(4, 21);
     const voting = { ...state, phase: 'VOTING' as const };
     expect(() => advanceSpeaker(voting, rng)).toThrow(/pha nói/);
+  });
+});
+
+describe('submitVotes', () => {
+  /** Dựng nhanh một state đang ở pha vote, dùng makeState cho gọn. */
+  function voting(roles: Role[], aliveIndexes: number[]) {
+    return makeState({ roles, aliveIndexes, phase: 'VOTING', round: 3 });
+  }
+
+  it('loại người nhiều phiếu nhất và chuyển sang pha lộ danh tính', () => {
+    const state = voting(['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'], [0, 1, 2, 3]);
+    const result = submitVotes(state, { p0: 3, p3: 1 }, createSeededRng(1));
+
+    expect(result.state.aliveIds).toEqual(['p1', 'p2', 'p3']);
+    expect(result.state.phase).toBe('REVEAL');
+    expect(result.state.eliminations).toEqual([
+      { round: 3, playerId: 'p0', role: 'CIVILIAN', byRandomTieBreak: false },
+    ]);
+    expect(result.events).toEqual([
+      { type: 'CIVILIAN_KILLED', payload: { player: 'Người 0', village: 'Thử Nghiệm' } },
+    ]);
+  });
+
+  it('bắt được gián điệp thì phát sự kiện riêng', () => {
+    const state = voting(['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'], [0, 1, 2, 3]);
+    const result = submitVotes(state, { p3: 3 }, createSeededRng(1));
+
+    expect(result.events[0].type).toBe('SPY_CAUGHT');
+  });
+
+  it('loại mũ trắng thì chuyển thẳng sang pha đoán từ', () => {
+    const state = voting(['CIVILIAN', 'CIVILIAN', 'SPY', 'WHITE'], [0, 1, 2, 3]);
+    const result = submitVotes(state, { p3: 3 }, createSeededRng(1));
+
+    expect(result.state.phase).toBe('WHITE_GUESS');
+    expect(result.events[0].type).toBe('WHITE_REVEALED');
+  });
+
+  it('hoà phiếu thì chuyển sang pha xử hoà và ghi lại danh sách hoà', () => {
+    const state = voting(['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'], [0, 1, 2, 3]);
+    const result = submitVotes(state, { p0: 2, p3: 2 }, createSeededRng(1));
+
+    expect(result.state.phase).toBe('TIE_BREAK');
+    expect([...result.state.tiedCandidateIds].sort()).toEqual(['p0', 'p3']);
+    expect(result.state.aliveIds).toHaveLength(4);
+    expect(result.events[0].type).toBe('VOTE_TIE');
+  });
+
+  it('bỏ phiếu lại mà vẫn hoà thì không loại ai và sang vòng mới', () => {
+    const state = {
+      ...voting(['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'], [0, 1, 2, 3]),
+      tiedCandidateIds: ['p0', 'p3'],
+      revoteUsed: true,
+    };
+    const result = submitVotes(state, { p0: 2, p3: 2 }, createSeededRng(1));
+
+    expect(result.state.aliveIds).toHaveLength(4);
+    expect(result.state.phase).toBe('SPEAKING');
+    expect(result.state.round).toBe(4);
+    expect(result.events[0].type).toBe('NO_ELIMINATION');
+  });
+
+  it('chỉ còn 2 người sống mà hoà thì bốc ngẫu nhiên, không treo ván', () => {
+    const state = voting(['CIVILIAN', 'CIVILIAN', 'SPY', 'WHITE'], [0, 3]);
+    const result = submitVotes(state, { p0: 1, p3: 1 }, createSeededRng(4));
+
+    expect(result.state.aliveIds).toHaveLength(1);
+    expect(result.state.eliminations[0].byRandomTieBreak).toBe(true);
+    expect(result.events[0].type).toBe('RANDOM_TIE_BREAK');
+  });
+
+  it('bốc ngẫu nhiên ở 2 người cuối không thiên vị một phía', () => {
+    const eliminated = new Set<string>();
+    for (let seed = 0; seed < 40; seed++) {
+      const state = voting(['CIVILIAN', 'CIVILIAN', 'SPY', 'WHITE'], [0, 3]);
+      const result = submitVotes(state, { p0: 1, p3: 1 }, createSeededRng(seed));
+      eliminated.add(result.state.eliminations[0].playerId);
+    }
+    expect(eliminated).toEqual(new Set(['p0', 'p3']));
+  });
+
+  it('từ chối bảng phiếu không hợp lệ', () => {
+    const state = voting(['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'], [0, 1, 2, 3]);
+
+    expect(() => submitVotes(state, { p0: 5 }, createSeededRng(1))).toThrow(
+      /không hợp lệ/,
+    );
+    expect(() => submitVotes(state, {}, createSeededRng(1))).toThrow(/không hợp lệ/);
+  });
+
+  it('ở lượt bỏ phiếu lại chỉ những người đang hoà mới được nhận phiếu', () => {
+    const state = {
+      ...voting(['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'], [0, 1, 2, 3]),
+      tiedCandidateIds: ['p0', 'p3'],
+      revoteUsed: true,
+    };
+
+    expect(() => submitVotes(state, { p1: 2 }, createSeededRng(1))).toThrow(
+      /không hợp lệ/,
+    );
+  });
+
+  it('báo lỗi khi gọi ngoài pha vote', () => {
+    const state = makeState({ roles: ['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'] });
+    expect(() => submitVotes(state, { p0: 1 }, createSeededRng(1))).toThrow(/pha vote/);
   });
 });

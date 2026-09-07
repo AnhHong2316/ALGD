@@ -7,8 +7,9 @@ import {
   Player,
   Role,
 } from '../models';
-import { Rng, shuffle } from './rng';
+import { Rng, pickIndex, shuffle } from './rng';
 import { validateTeam } from './team-rules';
+import { findVoteLeaders, isTallyValid, VoteTally } from './vote-resolver';
 
 export interface EngineResult {
   state: GameState;
@@ -208,4 +209,91 @@ export function advanceSpeaker(state: GameState, rng: Rng): EngineResult {
   }
 
   return startRound({ ...state, round: state.round + 1 }, rng);
+}
+
+/** Loại một người và chuyển sang pha lộ danh tính tương ứng với vai của họ. */
+function eliminate(
+  state: GameState,
+  playerId: string,
+  byRandomTieBreak: boolean,
+): EngineResult {
+  const role = state.assignments[playerId].role;
+  const playerName = nameOf(state, playerId);
+
+  const next: GameState = {
+    ...state,
+    aliveIds: state.aliveIds.filter((id) => id !== playerId),
+    eliminations: [
+      ...state.eliminations,
+      { round: state.round, playerId, role, byRandomTieBreak },
+    ],
+    tiedCandidateIds: [],
+    revoteUsed: false,
+    phase: role === 'WHITE' ? 'WHITE_GUESS' : 'REVEAL',
+  };
+
+  const events: NarrationEvent[] = [];
+  if (byRandomTieBreak) {
+    events.push({ type: 'RANDOM_TIE_BREAK', payload: { player: playerName } });
+  }
+
+  const payload = { player: playerName, village: state.villageName };
+  if (role === 'WHITE') events.push({ type: 'WHITE_REVEALED', payload });
+  else if (role === 'SPY') events.push({ type: 'SPY_CAUGHT', payload });
+  else events.push({ type: 'CIVILIAN_KILLED', payload });
+
+  return { state: next, events };
+}
+
+/** Vòng này không ai bị loại: quay lại vòng nói, không kiểm tra kết thúc. */
+function noElimination(state: GameState, rng: Rng): EngineResult {
+  const started = startRound({ ...state, round: state.round + 1 }, rng);
+  return {
+    state: started.state,
+    events: [
+      {
+        type: 'NO_ELIMINATION',
+        payload: { village: state.villageName, round: state.round },
+      },
+      ...started.events,
+    ],
+  };
+}
+
+export function submitVotes(
+  state: GameState,
+  tally: VoteTally,
+  rng: Rng,
+): EngineResult {
+  if (state.phase !== 'VOTING') {
+    throw new Error('submitVotes: chỉ gọi được ở pha vote');
+  }
+
+  // Ở lượt bỏ phiếu lại, chỉ những người đang hoà mới được nhận phiếu,
+  // nhưng số người bỏ phiếu vẫn là toàn bộ người còn sống.
+  const candidates =
+    state.tiedCandidateIds.length > 0 ? state.tiedCandidateIds : state.aliveIds;
+
+  if (!isTallyValid(tally, candidates, state.aliveIds.length)) {
+    throw new Error('submitVotes: bảng phiếu không hợp lệ');
+  }
+
+  const leaders = findVoteLeaders(tally);
+  if (leaders.length === 1) return eliminate(state, leaders[0], false);
+
+  // Ngoại lệ: còn đúng 2 người sống thì buộc phải phân định, vì nếu để
+  // "không loại ai" thì số người sống không bao giờ giảm và ván lặp vô tận.
+  if (state.aliveIds.length === 2) {
+    return eliminate(state, leaders[pickIndex(rng, leaders.length)], true);
+  }
+
+  if (state.revoteUsed) return noElimination(state, rng);
+
+  const next: GameState = { ...state, phase: 'TIE_BREAK', tiedCandidateIds: leaders };
+  return {
+    state: next,
+    events: [
+      { type: 'VOTE_TIE', payload: { village: next.villageName, round: next.round } },
+    ],
+  };
 }
