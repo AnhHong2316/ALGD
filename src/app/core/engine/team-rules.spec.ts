@@ -88,4 +88,16 @@ describe('team-rules', () => {
       expect(suggested).toBeLessThanOrEqual(maxSpyCount(players, true));
     }
   });
+
+  it('chặn đầu vào không phải số nguyên, kể cả NaN', () => {
+    // NaN lọt lưới nếu chỉ kiểm tra bằng < và >, vì mọi phép so sánh với NaN
+    // đều cho false. Đây là đường vào có thật: ô nhập số gián điệp ở màn cấu
+    // hình cho ra NaN khi để trống.
+    expect(validateTeam(6, NaN, false).valid).toBe(false);
+    expect(validateTeam(NaN, 2, false).valid).toBe(false);
+    expect(validateTeam(6.5, 2, false).valid).toBe(false);
+    expect(validateTeam(6, 2.5, false).valid).toBe(false);
+    expect(validateTeam(Infinity, 2, false).valid).toBe(false);
+    expect(validateTeam(6, Infinity, false).valid).toBe(false);
+  });
 });

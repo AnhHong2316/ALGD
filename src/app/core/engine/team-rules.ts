@@ -31,6 +31,15 @@ export function validateTeam(
   spyCount: number,
   hasWhite: boolean,
 ): TeamValidation {
+  // Phải chặn trước mọi phép so sánh: mọi so sánh với NaN đều cho false, nên
+  // NaN sẽ lọt qua hết các kiểm tra khoảng bên dưới rồi được báo là hợp lệ.
+  if (!Number.isInteger(playerCount)) {
+    return { valid: false, reason: 'Số người chơi phải là số nguyên' };
+  }
+  if (!Number.isInteger(spyCount)) {
+    return { valid: false, reason: 'Số gián điệp phải là số nguyên' };
+  }
+
   if (playerCount < MIN_PLAYERS) {
     return { valid: false, reason: `Cần ít nhất ${MIN_PLAYERS} người chơi` };
   }
