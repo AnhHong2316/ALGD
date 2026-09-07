@@ -255,8 +255,10 @@ interface GameConfig {
   spyCount: number;
   hasWhite: boolean;
   revealSpyToSpy: boolean;       // chế độ Bật mí, mặc định false
-  topics: string[];         // rỗng = tất cả chủ đề đang bật
-  difficulties: WordPair['difficulty'][];
+  // readonly + Object.freeze: hằng mặc định bị spread ở nhiều nơi mà spread
+  // chỉ copy nông, nên mảng con phải không sửa được.
+  topics: readonly string[];               // rỗng = tất cả chủ đề đang bật
+  difficulties: readonly WordPair['difficulty'][];
   timerSeconds: number | null;   // null = tắt đồng hồ
   minRoundsBeforeVote: number;   // mặc định 3
 }
@@ -318,7 +320,11 @@ interface NarrationEvent {
 }
 ```
 
-**Ràng buộc an toàn bắt buộc:** `payload` chỉ được chứa ba trường trên. Không bao giờ chứa từ bí mật. Kiểu dữ liệu chặn ở mức compile-time, và có unit test chạy hết mọi nhánh của engine để khẳng định không event nào chứa `civilianWord` hoặc `spyWord`.
+**Ràng buộc an toàn bắt buộc:** `payload` chỉ được chứa ba trường trên. Không bao giờ chứa từ bí mật.
+
+Cần nói chính xác về mức bảo đảm ở đây, vì dễ tưởng nhầm là đã an toàn tuyệt đối. TypeScript **chỉ** chặn thuộc tính thừa khi payload được viết dưới dạng object literal gán thẳng vào chỗ có kiểu `NarrationPayload`. Nó **không** chặn khi payload đi qua spread, qua một biến có kiểu rộng hơn, hay qua ép kiểu. Toàn bộ code trong engine đều viết payload dưới dạng literal inline nên lớp chặn này có tác dụng, nhưng nó là quy ước được kiểu hỗ trợ chứ không phải hàng rào không thể vượt.
+
+Lớp bảo vệ thật nằm ở unit test: chạy hết mọi nhánh của engine rồi quét toàn bộ sự kiện phát ra để khẳng định không sự kiện nào chứa `civilianWord` hoặc `spyWord`. Đó mới là thứ bắt được lỗi nếu ai đó sau này dựng payload bằng spread.
 
 ---
 

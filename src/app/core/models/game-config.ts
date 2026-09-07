@@ -20,8 +20,8 @@ export interface ScoreRules {
 }
 
 /**
- * Đóng băng cả hằng lẫn mảy con: cấu hình mặc định được spread ở rất nhiều
- * nơi, mà spread chỉ copy nông. Nếu mảy con còn sửa được thì một lần push
+ * Đóng băng cả hằng lẫn mảng con: cấu hình mặc định được spread ở rất nhiều
+ * nơi, mà spread chỉ copy nông. Nếu mảng con còn sửa được thì một lần push
  * nhầm sẽ làm hỏng mặc định cho toàn bộ phiên chạy.
  */
 export const DEFAULT_SCORE_RULES: ScoreRules = Object.freeze({
