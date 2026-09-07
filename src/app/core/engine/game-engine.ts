@@ -297,3 +297,25 @@ export function submitVotes(
     ],
   };
 }
+
+export type TieChoice = 'REVOTE' | 'NO_ELIMINATION';
+
+export function resolveTie(
+  state: GameState,
+  choice: TieChoice,
+  rng: Rng,
+): EngineResult {
+  if (state.phase !== 'TIE_BREAK') {
+    throw new Error('resolveTie: chỉ gọi được ở pha xử hoà');
+  }
+
+  if (choice === 'NO_ELIMINATION') return noElimination(state, rng);
+
+  const next: GameState = { ...state, phase: 'VOTING', revoteUsed: true };
+  return {
+    state: next,
+    events: [
+      { type: 'VOTE_OPEN', payload: { village: next.villageName, round: next.round } },
+    ],
+  };
+}
