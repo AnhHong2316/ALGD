@@ -953,6 +953,20 @@ describe('SpeakingPage', () => {
     expect(text).toContain(session.currentSpeakerName()!);
   });
 
+  it('hiện thứ tự nói của cả vòng', async () => {
+    const { fixture } = await setup();
+
+    const chips = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      '.speaking__chip',
+    );
+    expect(chips).toHaveLength(NAMES.length);
+    expect(
+      Array.from(chips)
+        .map((chip) => chip.textContent!.trim())
+        .sort(),
+    ).toEqual([...NAMES].sort());
+  });
+
   it('nhắc còn mấy vòng nữa mới được vote', async () => {
     const { fixture } = await setup({ minRoundsBeforeVote: 3 });
 
@@ -1210,7 +1224,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 299 cộng 8 mới, thành **307**. Báo lại con số thật.
+Expected: PASS — 299 cộng 9 mới, thành **308**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -1539,7 +1553,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 307 cộng 7 mới, thành **314**. Báo lại con số thật.
+Expected: PASS — 308 cộng 7 mới, thành **315**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -1749,7 +1763,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 314 cộng 4 mới, thành **318**. Báo lại con số thật.
+Expected: PASS — 315 cộng 4 mới, thành **319**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -2008,7 +2022,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 318 cộng 5 mới, thành **323**. Báo lại con số thật.
+Expected: PASS — 319 cộng 5 mới, thành **324**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -2257,7 +2271,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 323 cộng 6 mới, thành **329**. Báo lại con số thật.
+Expected: PASS — 324 cộng 6 mới, thành **330**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -2615,7 +2629,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 329 cộng 6 mới, thành **335**. Báo lại con số thật.
+Expected: PASS — 330 cộng 6 mới, thành **336**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -2839,7 +2853,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 335 cộng 3 mới, thành **338**. Báo lại con số thật.
+Expected: PASS — 336 cộng 3 mới, thành **339**. Báo lại con số thật.
 
 - [ ] **Step 5: Build để chắc mọi chunk lười đều dịch được**
 
