@@ -38,6 +38,14 @@ export function levenshtein(a: string, b: string): number {
 }
 
 /**
+ * Mức sai lệch tối đa còn được chấp nhận cho một đáp án đã chuẩn hoá.
+ * Từ ngắn thì chặt hơn, vì một ký tự sai trong từ ba chữ đã là một từ khác.
+ */
+export function guessThreshold(normalizedAnswer: string): number {
+  return normalizedAnswer.length <= 8 ? 1 : 2;
+}
+
+/**
  * Ngưỡng theo độ dài đáp án: đáp án tối đa 8 ký tự thì cho sai 1,
  * dài hơn thì cho sai 2. Tránh việc từ ngắn bị nhận nhầm sang từ khác.
  */
@@ -48,6 +56,6 @@ export function isGuessCorrect(guess: string, answer: string): boolean {
   if (normalizedGuess.length === 0 || normalizedAnswer.length === 0) return false;
   if (normalizedGuess === normalizedAnswer) return true;
 
-  const threshold = normalizedAnswer.length <= 8 ? 1 : 2;
+  const threshold = guessThreshold(normalizedAnswer);
   return levenshtein(normalizedGuess, normalizedAnswer) <= threshold;
 }
