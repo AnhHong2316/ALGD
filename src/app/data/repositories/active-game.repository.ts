@@ -1,6 +1,8 @@
 import { GameState } from '../../core/models';
 import { JsonStore } from '../json-store';
 import { StoragePort } from '../storage/storage-port';
+import { Inject, Injectable } from '@angular/core';
+import { STORAGE_PORT } from '../storage/storage.token';
 
 function isGameState(value: unknown): value is GameState {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
@@ -29,10 +31,11 @@ function isGameState(value: unknown): value is GameState {
  * `load` trả về null cho cả ba trường hợp: chưa từng lưu, dữ liệu hỏng, và
  * ván đã kết thúc. Người gọi chỉ cần hỏi một câu "có ván nào để tiếp không".
  */
+@Injectable()
 export class ActiveGameRepository {
   private readonly store: JsonStore<GameState | null>;
 
-  constructor(storage: StoragePort) {
+  constructor(@Inject(STORAGE_PORT) storage: StoragePort) {
     this.store = new JsonStore<GameState | null>(
       storage,
       'activeGame',

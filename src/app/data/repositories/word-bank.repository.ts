@@ -3,6 +3,8 @@ import { WordPair } from '../../core/models';
 import { JsonStore } from '../json-store';
 import { StoragePort } from '../storage/storage-port';
 import { PACKAGED_PAIRS, toWordPair } from '../word-bank';
+import { Inject, Injectable } from '@angular/core';
+import { STORAGE_PORT } from '../storage/storage.token';
 
 function isStringList(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
@@ -34,12 +36,13 @@ function isWordPairList(value: unknown): value is WordPair[] {
  * Cặp gốc chỉ được ẩn chứ không xoá, để người dùng lỡ tay còn hiện lại được.
  * Cặp tự thêm thì xoá thật.
  */
+@Injectable()
 export class WordBankRepository {
   private readonly customPairs: JsonStore<WordPair[]>;
   private readonly hiddenIds: JsonStore<string[]>;
   private readonly usedPairIds: JsonStore<string[]>;
 
-  constructor(storage: StoragePort) {
+  constructor(@Inject(STORAGE_PORT) storage: StoragePort) {
     this.customPairs = new JsonStore(storage, 'customPairs', isWordPairList, () => []);
     this.hiddenIds = new JsonStore(storage, 'hiddenPairIds', isStringList, () => []);
     this.usedPairIds = new JsonStore(storage, 'usedPairIds', isStringList, () => []);
