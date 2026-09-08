@@ -1,0 +1,26 @@
+import { PackagedPair } from './types';
+
+export const SPORT_PAIRS = [
+  { id: 'tt-001', wordA: 'bóng đá', wordB: 'bóng rổ', topic: 'Thể thao', difficulty: 'MEDIUM' },
+  { id: 'tt-002', wordA: 'cầu lông', wordB: 'bóng bàn', topic: 'Thể thao', difficulty: 'HARD' },
+  { id: 'tt-003', wordA: 'bơi lội', wordB: 'chạy bộ', topic: 'Thể thao', difficulty: 'EASY' },
+  { id: 'tt-004', wordA: 'cờ vua', wordB: 'cờ tướng', topic: 'Thể thao', difficulty: 'HARD' },
+  { id: 'tt-005', wordA: 'đạp xe', wordB: 'trượt patin', topic: 'Thể thao', difficulty: 'MEDIUM' },
+  { id: 'tt-006', wordA: 'yoga', wordB: 'thể dục nhịp điệu', topic: 'Thể thao', difficulty: 'MEDIUM' },
+  { id: 'tt-007', wordA: 'bóng chuyền', wordB: 'bóng ném', topic: 'Thể thao', difficulty: 'HARD' },
+  { id: 'tt-008', wordA: 'leo núi', wordB: 'đi bộ đường dài', topic: 'Thể thao', difficulty: 'MEDIUM' },
+  { id: 'tt-009', wordA: 'quyền anh', wordB: 'võ karate', topic: 'Thể thao', difficulty: 'MEDIUM' },
+  { id: 'tt-010', wordA: 'bóng bầu dục', wordB: 'bóng chày', topic: 'Thể thao', difficulty: 'HARD' },
+  { id: 'tt-011', wordA: 'trượt tuyết', wordB: 'trượt băng nghệ thuật', topic: 'Thể thao', difficulty: 'HARD' },
+  { id: 'tt-012', wordA: 'bắn cung', wordB: 'ném lao', topic: 'Thể thao', difficulty: 'MEDIUM' },
+  { id: 'tt-013', wordA: 'đấu vật', wordB: 'đấu kiếm', topic: 'Thể thao', difficulty: 'HARD' },
+  { id: 'tt-014', wordA: 'nhảy cao', wordB: 'nhảy xa', topic: 'Thể thao', difficulty: 'HARD' },
+  { id: 'tt-015', wordA: 'bóng nước', wordB: 'lặn biển', topic: 'Thể thao', difficulty: 'MEDIUM' },
+  { id: 'tt-016', wordA: 'đua xe đạp', wordB: 'đua thuyền', topic: 'Thể thao', difficulty: 'MEDIUM' },
+  { id: 'tt-017', wordA: 'thể dục dụng cụ', wordB: 'múa ba lê', topic: 'Thể thao', difficulty: 'EASY' },
+  { id: 'tt-018', wordA: 'đá cầu', wordB: 'cầu mây', topic: 'Thể thao', difficulty: 'HARD' },
+  { id: 'tt-019', wordA: 'cử tạ', wordB: 'thể hình', topic: 'Thể thao', difficulty: 'MEDIUM' },
+  { id: 'tt-020', wordA: 'nhảy dù', wordB: 'dù lượn', topic: 'Thể thao', difficulty: 'HARD' },
+  { id: 'tt-021', wordA: 'đánh gôn', wordB: 'chơi bowling', topic: 'Thể thao', difficulty: 'EASY' },
+  { id: 'tt-022', wordA: 'lướt sóng', wordB: 'chèo thuyền', topic: 'Thể thao', difficulty: 'MEDIUM' },
+] as const satisfies readonly PackagedPair[];

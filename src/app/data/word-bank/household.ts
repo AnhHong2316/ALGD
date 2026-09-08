@@ -1,0 +1,26 @@
+import { PackagedPair } from './types';
+
+export const HOUSEHOLD_PAIRS = [
+  { id: 'dn-001', wordA: 'cái tủ lạnh', wordB: 'máy giặt', topic: 'Đồ vật trong nhà', difficulty: 'EASY' },
+  { id: 'dn-002', wordA: 'bút bi', wordB: 'bút chì', topic: 'Đồ vật trong nhà', difficulty: 'HARD' },
+  { id: 'dn-003', wordA: 'cái ghế', wordB: 'cái bàn', topic: 'Đồ vật trong nhà', difficulty: 'MEDIUM' },
+  { id: 'dn-004', wordA: 'cái gối', wordB: 'cái chăn', topic: 'Đồ vật trong nhà', difficulty: 'MEDIUM' },
+  { id: 'dn-005', wordA: 'cái quạt', wordB: 'máy lạnh', topic: 'Đồ vật trong nhà', difficulty: 'MEDIUM' },
+  { id: 'dn-006', wordA: 'cái chổi', wordB: 'cây lau nhà', topic: 'Đồ vật trong nhà', difficulty: 'HARD' },
+  { id: 'dn-007', wordA: 'cái nồi', wordB: 'cái chảo', topic: 'Đồ vật trong nhà', difficulty: 'HARD' },
+  { id: 'dn-008', wordA: 'ti vi', wordB: 'máy tính', topic: 'Đồ vật trong nhà', difficulty: 'EASY' },
+  { id: 'dn-009', wordA: 'đèn bàn', wordB: 'đèn ngủ', topic: 'Đồ vật trong nhà', difficulty: 'MEDIUM' },
+  { id: 'dn-010', wordA: 'cái gương', wordB: 'cái kệ', topic: 'Đồ vật trong nhà', difficulty: 'MEDIUM' },
+  { id: 'dn-011', wordA: 'cái thảm', wordB: 'rèm cửa', topic: 'Đồ vật trong nhà', difficulty: 'MEDIUM' },
+  { id: 'dn-012', wordA: 'cái kéo', wordB: 'cái dao', topic: 'Đồ vật trong nhà', difficulty: 'HARD' },
+  { id: 'dn-013', wordA: 'cái bát', wordB: 'cái đĩa', topic: 'Đồ vật trong nhà', difficulty: 'MEDIUM' },
+  { id: 'dn-014', wordA: 'đồng hồ treo tường', wordB: 'đồng hồ đeo tay', topic: 'Đồ vật trong nhà', difficulty: 'HARD' },
+  { id: 'dn-015', wordA: 'tủ quần áo', wordB: 'kệ sách', topic: 'Đồ vật trong nhà', difficulty: 'MEDIUM' },
+  { id: 'dn-016', wordA: 'bình nước nóng', wordB: 'máy lọc nước', topic: 'Đồ vật trong nhà', difficulty: 'MEDIUM' },
+  { id: 'dn-017', wordA: 'cái xô', wordB: 'cái thau', topic: 'Đồ vật trong nhà', difficulty: 'EASY' },
+  { id: 'dn-018', wordA: 'móc treo đồ', wordB: 'kẹp quần áo', topic: 'Đồ vật trong nhà', difficulty: 'HARD' },
+  { id: 'dn-019', wordA: 'ổ khóa cửa', wordB: 'chìa khóa nhà', topic: 'Đồ vật trong nhà', difficulty: 'HARD' },
+  { id: 'dn-020', wordA: 'bóng đèn', wordB: 'dây điện', topic: 'Đồ vật trong nhà', difficulty: 'MEDIUM' },
+  { id: 'dn-021', wordA: 'quạt trần', wordB: 'quạt cây', topic: 'Đồ vật trong nhà', difficulty: 'HARD' },
+  { id: 'dn-022', wordA: 'thùng rác', wordB: 'giỏ đựng đồ', topic: 'Đồ vật trong nhà', difficulty: 'EASY' },
+] as const satisfies readonly PackagedPair[];

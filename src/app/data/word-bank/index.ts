@@ -1,6 +1,9 @@
 import { WordPair } from '../../core/models';
 import { ANIMAL_PAIRS } from './animals';
 import { FOOD_PAIRS } from './food';
+import { HOUSEHOLD_PAIRS } from './household';
+import { JOB_PAIRS } from './jobs';
+import { SPORT_PAIRS } from './sports';
 import { PackagedPair } from './types';
 
 export * from './types';
@@ -12,6 +15,9 @@ export * from './types';
 export const PACKAGED_PAIRS: readonly PackagedPair[] = [
   ...ANIMAL_PAIRS,
   ...FOOD_PAIRS,
+  ...JOB_PAIRS,
+  ...HOUSEHOLD_PAIRS,
+  ...SPORT_PAIRS,
 ];
 
 /** Gắn hai cờ trạng thái mặc định để biến dữ liệu tĩnh thành WordPair dùng được. */
