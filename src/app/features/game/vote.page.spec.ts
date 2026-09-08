@@ -108,6 +108,32 @@ describe('VotePage', () => {
     expect(session.state()?.aliveIds).not.toContain(target.id);
   });
 
+  it('ở lượt bỏ phiếu lại, trần phiếu vẫn là số người còn sống', async () => {
+    const { session, fixture } = await setup();
+    const [a, b] = session.alivePlayers();
+
+    fixture.componentInstance.add(a.id, 1);
+    fixture.componentInstance.add(b.id, 1);
+    await fixture.componentInstance.submit();
+    await session.breakTie('REVOTE');
+
+    const revote = TestBed.createComponent(VotePage);
+    revote.detectChanges();
+
+    // Hai người đang hoà, nhưng cả bốn người còn sống đều bỏ phiếu lại.
+    expect(revote.componentInstance.candidates()).toHaveLength(2);
+    expect(revote.componentInstance.voterCount()).toBe(4);
+
+    // Tỉ số 3–1 là hợp lệ khi có bốn người bỏ phiếu. Nếu lấy nhầm trần bằng
+    // số ứng viên thì màn hình sẽ chặn một lá phiếu đúng luật và kêu oan.
+    revote.componentInstance.add(a.id, 3);
+    revote.componentInstance.add(b.id, 1);
+    revote.detectChanges();
+
+    expect(revote.componentInstance.tooMany()).toBe(false);
+    expect(revote.componentInstance.canSubmit()).toBe(true);
+  });
+
   it('ở lượt bỏ phiếu lại chỉ hiện những người đang hoà', async () => {
     const { session, fixture } = await setup();
     const [a, b, c] = session.alivePlayers();
