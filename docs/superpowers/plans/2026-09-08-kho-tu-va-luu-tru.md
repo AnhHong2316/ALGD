@@ -254,8 +254,10 @@ Nếu npm báo lỗi giải phụ thuộc như từng xảy ra lúc dựng works
 
 ```bash
 cd /c/SRC/ai-la-gian-diep
-npx cap init "Ai Là Gián Điệp" com.hungnguyen.ailagiandiep --web-dir dist/ai-la-gian-diep/browser
+npx cap init "Ai La Gian Diep" com.hungnguyen.ailagiandiep --web-dir dist/ai-la-gian-diep/browser
 ```
+
+Tên ứng dụng để không dấu vì nó đi thẳng vào cấu hình dự án Android, nơi dấu tiếng Việt hay gây rắc rối với công cụ build. Tên hiển thị có dấu sẽ đặt riêng ở kế hoạch số 4.
 
 Lệnh này chỉ sinh ra `capacitor.config.ts`. **Không** chạy `npx cap add android` — nền tảng Android thuộc kế hoạch số 4, và máy này chưa cài Java lẫn Android SDK.
 
@@ -2038,7 +2040,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS, tổng 207 + 12 = 219.
+Expected: PASS, tổng 207 + 11 = 218.
 
 - [ ] **Step 5: Commit**
 
@@ -2360,7 +2362,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS, tổng 219 + 11 = 230.
+Expected: PASS, tổng 218 + 11 = 229.
 
 - [ ] **Step 6: Commit**
 
@@ -2612,7 +2614,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS, tổng 230 + 7 = 237.
+Expected: PASS, tổng 229 + 7 = 236.
 
 - [ ] **Step 5: Kiểm tra build**
 

@@ -1,0 +1,26 @@
+import { PackagedPair } from './types';
+
+export const NATURE_PAIRS = [
+  { id: 'tn-001', wordA: 'mặt trời', wordB: 'mặt trăng', topic: 'Thiên nhiên', difficulty: 'MEDIUM' },
+  { id: 'tn-002', wordA: 'dòng sông', wordB: 'con suối', topic: 'Thiên nhiên', difficulty: 'HARD' },
+  { id: 'tn-003', wordA: 'ngọn núi', wordB: 'quả đồi', topic: 'Thiên nhiên', difficulty: 'HARD' },
+  { id: 'tn-004', wordA: 'cơn mưa', wordB: 'cơn bão', topic: 'Thiên nhiên', difficulty: 'MEDIUM' },
+  { id: 'tn-005', wordA: 'bãi biển', wordB: 'sa mạc', topic: 'Thiên nhiên', difficulty: 'EASY' },
+  { id: 'tn-006', wordA: 'cây tre', wordB: 'cây dừa', topic: 'Thiên nhiên', difficulty: 'MEDIUM' },
+  { id: 'tn-007', wordA: 'cầu vồng', wordB: 'tia chớp', topic: 'Thiên nhiên', difficulty: 'EASY' },
+  { id: 'tn-008', wordA: 'rừng rậm', wordB: 'đồng cỏ', topic: 'Thiên nhiên', difficulty: 'MEDIUM' },
+  { id: 'tn-009', wordA: 'hồ nước', wordB: 'ao cá', topic: 'Thiên nhiên', difficulty: 'HARD' },
+  { id: 'tn-010', wordA: 'thác nước', wordB: 'suối nước nóng', topic: 'Thiên nhiên', difficulty: 'MEDIUM' },
+  { id: 'tn-011', wordA: 'đám mây', wordB: 'sương mù', topic: 'Thiên nhiên', difficulty: 'MEDIUM' },
+  { id: 'tn-012', wordA: 'hoa hồng', wordB: 'hoa cúc', topic: 'Thiên nhiên', difficulty: 'MEDIUM' },
+  { id: 'tn-013', wordA: 'cây bàng', wordB: 'cây phượng', topic: 'Thiên nhiên', difficulty: 'HARD' },
+  { id: 'tn-014', wordA: 'núi lửa', wordB: 'động đất', topic: 'Thiên nhiên', difficulty: 'EASY' },
+  { id: 'tn-015', wordA: 'bình minh', wordB: 'hoàng hôn', topic: 'Thiên nhiên', difficulty: 'HARD' },
+  { id: 'tn-016', wordA: 'gió mùa', wordB: 'lốc xoáy', topic: 'Thiên nhiên', difficulty: 'MEDIUM' },
+  { id: 'tn-017', wordA: 'đảo hoang', wordB: 'bán đảo', topic: 'Thiên nhiên', difficulty: 'HARD' },
+  { id: 'tn-018', wordA: 'hang động', wordB: 'vách đá', topic: 'Thiên nhiên', difficulty: 'MEDIUM' },
+  { id: 'tn-019', wordA: 'băng tuyết', wordB: 'sương giá', topic: 'Thiên nhiên', difficulty: 'HARD' },
+  { id: 'tn-020', wordA: 'đầm lầy', wordB: 'bãi bồi', topic: 'Thiên nhiên', difficulty: 'HARD' },
+  { id: 'tn-021', wordA: 'cánh đồng', wordB: 'thửa ruộng', topic: 'Thiên nhiên', difficulty: 'HARD' },
+  { id: 'tn-022', wordA: 'vườn quốc gia', wordB: 'khu bảo tồn', topic: 'Thiên nhiên', difficulty: 'HARD' },
+] as const satisfies readonly PackagedPair[];

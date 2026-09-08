@@ -1,0 +1,26 @@
+import { PackagedPair } from './types';
+
+export const JOB_PAIRS = [
+  { id: 'nn-001', wordA: 'bác sĩ', wordB: 'y tá', topic: 'Nghề nghiệp', difficulty: 'MEDIUM' },
+  { id: 'nn-002', wordA: 'giáo viên', wordB: 'gia sư', topic: 'Nghề nghiệp', difficulty: 'HARD' },
+  { id: 'nn-003', wordA: 'đầu bếp', wordB: 'thợ làm bánh', topic: 'Nghề nghiệp', difficulty: 'MEDIUM' },
+  { id: 'nn-004', wordA: 'cảnh sát', wordB: 'bảo vệ', topic: 'Nghề nghiệp', difficulty: 'MEDIUM' },
+  { id: 'nn-005', wordA: 'ca sĩ', wordB: 'diễn viên', topic: 'Nghề nghiệp', difficulty: 'EASY' },
+  { id: 'nn-006', wordA: 'thợ cắt tóc', wordB: 'thợ may', topic: 'Nghề nghiệp', difficulty: 'EASY' },
+  { id: 'nn-007', wordA: 'phi công', wordB: 'tiếp viên hàng không', topic: 'Nghề nghiệp', difficulty: 'MEDIUM' },
+  { id: 'nn-008', wordA: 'lập trình viên', wordB: 'kỹ sư điện', topic: 'Nghề nghiệp', difficulty: 'HARD' },
+  { id: 'nn-009', wordA: 'nông dân', wordB: 'ngư dân', topic: 'Nghề nghiệp', difficulty: 'MEDIUM' },
+  { id: 'nn-010', wordA: 'luật sư', wordB: 'thẩm phán', topic: 'Nghề nghiệp', difficulty: 'HARD' },
+  { id: 'nn-011', wordA: 'kiến trúc sư', wordB: 'kỹ sư xây dựng', topic: 'Nghề nghiệp', difficulty: 'HARD' },
+  { id: 'nn-012', wordA: 'nhiếp ảnh gia', wordB: 'họa sĩ', topic: 'Nghề nghiệp', difficulty: 'MEDIUM' },
+  { id: 'nn-013', wordA: 'tài xế taxi', wordB: 'tài xế xe buýt', topic: 'Nghề nghiệp', difficulty: 'HARD' },
+  { id: 'nn-014', wordA: 'lính cứu hỏa', wordB: 'lính cứu thương', topic: 'Nghề nghiệp', difficulty: 'HARD' },
+  { id: 'nn-015', wordA: 'thủ thư', wordB: 'nhân viên văn phòng', topic: 'Nghề nghiệp', difficulty: 'EASY' },
+  { id: 'nn-016', wordA: 'thợ điện', wordB: 'thợ sửa ống nước', topic: 'Nghề nghiệp', difficulty: 'MEDIUM' },
+  { id: 'nn-017', wordA: 'người mẫu', wordB: 'diễn viên múa', topic: 'Nghề nghiệp', difficulty: 'MEDIUM' },
+  { id: 'nn-018', wordA: 'nhà báo', wordB: 'phát thanh viên', topic: 'Nghề nghiệp', difficulty: 'MEDIUM' },
+  { id: 'nn-019', wordA: 'thợ săn', wordB: 'kiểm lâm', topic: 'Nghề nghiệp', difficulty: 'HARD' },
+  { id: 'nn-020', wordA: 'người bán hàng', wordB: 'thu ngân', topic: 'Nghề nghiệp', difficulty: 'MEDIUM' },
+  { id: 'nn-021', wordA: 'huấn luyện viên', wordB: 'trọng tài', topic: 'Nghề nghiệp', difficulty: 'MEDIUM' },
+  { id: 'nn-022', wordA: 'thợ mộc', wordB: 'thợ hàn', topic: 'Nghề nghiệp', difficulty: 'EASY' },
+] as const satisfies readonly PackagedPair[];

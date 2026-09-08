@@ -1,0 +1,26 @@
+import { PackagedPair } from './types';
+
+export const FOOD_PAIRS = [
+  { id: 'da-001', wordA: 'phở bò', wordB: 'bún bò', topic: 'Đồ ăn thức uống', difficulty: 'HARD' },
+  { id: 'da-002', wordA: 'cà phê', wordB: 'trà sữa', topic: 'Đồ ăn thức uống', difficulty: 'EASY' },
+  { id: 'da-003', wordA: 'bánh mì', wordB: 'bánh bao', topic: 'Đồ ăn thức uống', difficulty: 'MEDIUM' },
+  { id: 'da-004', wordA: 'cơm tấm', wordB: 'cơm chiên', topic: 'Đồ ăn thức uống', difficulty: 'HARD' },
+  { id: 'da-005', wordA: 'kem que', wordB: 'chè đậu', topic: 'Đồ ăn thức uống', difficulty: 'MEDIUM' },
+  { id: 'da-006', wordA: 'nước mắm', wordB: 'nước tương', topic: 'Đồ ăn thức uống', difficulty: 'HARD' },
+  { id: 'da-007', wordA: 'quả chuối', wordB: 'quả xoài', topic: 'Đồ ăn thức uống', difficulty: 'EASY' },
+  { id: 'da-008', wordA: 'gỏi cuốn', wordB: 'chả giò', topic: 'Đồ ăn thức uống', difficulty: 'MEDIUM' },
+  { id: 'da-009', wordA: 'cà rốt', wordB: 'củ cải', topic: 'Đồ ăn thức uống', difficulty: 'MEDIUM' },
+  { id: 'da-010', wordA: 'rau muống', wordB: 'rau cải', topic: 'Đồ ăn thức uống', difficulty: 'HARD' },
+  { id: 'da-011', wordA: 'sữa chua', wordB: 'sữa tươi', topic: 'Đồ ăn thức uống', difficulty: 'HARD' },
+  { id: 'da-012', wordA: 'bánh chưng', wordB: 'bánh tét', topic: 'Đồ ăn thức uống', difficulty: 'HARD' },
+  { id: 'da-013', wordA: 'quả dừa', wordB: 'quả đu đủ', topic: 'Đồ ăn thức uống', difficulty: 'EASY' },
+  { id: 'da-014', wordA: 'mì gói', wordB: 'phở gói', topic: 'Đồ ăn thức uống', difficulty: 'HARD' },
+  { id: 'da-015', wordA: 'nước ngọt', wordB: 'nước suối', topic: 'Đồ ăn thức uống', difficulty: 'MEDIUM' },
+  { id: 'da-016', wordA: 'kẹo dẻo', wordB: 'kẹo cứng', topic: 'Đồ ăn thức uống', difficulty: 'MEDIUM' },
+  { id: 'da-017', wordA: 'bún riêu', wordB: 'bún ốc', topic: 'Đồ ăn thức uống', difficulty: 'HARD' },
+  { id: 'da-018', wordA: 'xôi gấc', wordB: 'xôi đậu xanh', topic: 'Đồ ăn thức uống', difficulty: 'HARD' },
+  { id: 'da-019', wordA: 'trà đá', wordB: 'trà chanh', topic: 'Đồ ăn thức uống', difficulty: 'MEDIUM' },
+  { id: 'da-020', wordA: 'bánh xèo', wordB: 'bánh khọt', topic: 'Đồ ăn thức uống', difficulty: 'HARD' },
+  { id: 'da-021', wordA: 'hạt điều', wordB: 'hạt dẻ', topic: 'Đồ ăn thức uống', difficulty: 'MEDIUM' },
+  { id: 'da-022', wordA: 'sinh tố', wordB: 'nước ép', topic: 'Đồ ăn thức uống', difficulty: 'EASY' },
+] as const satisfies readonly PackagedPair[];

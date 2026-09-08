@@ -1,0 +1,26 @@
+import { PackagedPair } from './types';
+
+export const ANIMAL_PAIRS = [
+  { id: 'dv-001', wordA: 'con chó', wordB: 'con mèo', topic: 'Động vật', difficulty: 'EASY' },
+  { id: 'dv-002', wordA: 'con gà', wordB: 'con vịt', topic: 'Động vật', difficulty: 'MEDIUM' },
+  { id: 'dv-003', wordA: 'con trâu', wordB: 'con bò', topic: 'Động vật', difficulty: 'MEDIUM' },
+  { id: 'dv-004', wordA: 'con voi', wordB: 'con hươu cao cổ', topic: 'Động vật', difficulty: 'EASY' },
+  { id: 'dv-005', wordA: 'con cá heo', wordB: 'con cá mập', topic: 'Động vật', difficulty: 'MEDIUM' },
+  { id: 'dv-006', wordA: 'con ong', wordB: 'con bướm', topic: 'Động vật', difficulty: 'EASY' },
+  { id: 'dv-007', wordA: 'con hổ', wordB: 'con sư tử', topic: 'Động vật', difficulty: 'HARD' },
+  { id: 'dv-008', wordA: 'con rùa', wordB: 'con ốc sên', topic: 'Động vật', difficulty: 'HARD' },
+  { id: 'dv-009', wordA: 'con dê', wordB: 'con cừu', topic: 'Động vật', difficulty: 'MEDIUM' },
+  { id: 'dv-010', wordA: 'con ngựa', wordB: 'con lừa', topic: 'Động vật', difficulty: 'MEDIUM' },
+  { id: 'dv-011', wordA: 'con thỏ', wordB: 'con sóc', topic: 'Động vật', difficulty: 'EASY' },
+  { id: 'dv-012', wordA: 'con khỉ', wordB: 'con vượn', topic: 'Động vật', difficulty: 'HARD' },
+  { id: 'dv-013', wordA: 'con cua', wordB: 'con tôm', topic: 'Động vật', difficulty: 'MEDIUM' },
+  { id: 'dv-014', wordA: 'con ếch', wordB: 'con nhái', topic: 'Động vật', difficulty: 'HARD' },
+  { id: 'dv-015', wordA: 'con rắn', wordB: 'con thằn lằn', topic: 'Động vật', difficulty: 'MEDIUM' },
+  { id: 'dv-016', wordA: 'con gấu', wordB: 'con gấu trúc', topic: 'Động vật', difficulty: 'HARD' },
+  { id: 'dv-017', wordA: 'con cáo', wordB: 'con chồn', topic: 'Động vật', difficulty: 'MEDIUM' },
+  { id: 'dv-018', wordA: 'con dơi', wordB: 'con chim sẻ', topic: 'Động vật', difficulty: 'EASY' },
+  { id: 'dv-019', wordA: 'con nhện', wordB: 'con bọ cạp', topic: 'Động vật', difficulty: 'HARD' },
+  { id: 'dv-020', wordA: 'con kiến', wordB: 'con mối', topic: 'Động vật', difficulty: 'HARD' },
+  { id: 'dv-021', wordA: 'con công', wordB: 'con sáo', topic: 'Động vật', difficulty: 'MEDIUM' },
+  { id: 'dv-022', wordA: 'con lạc đà', wordB: 'con ngựa vằn', topic: 'Động vật', difficulty: 'EASY' },
+] as const satisfies readonly PackagedPair[];
