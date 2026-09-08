@@ -92,8 +92,15 @@ export class RevealPage {
     return elimination === null ? '' : ROLE_LABEL[elimination.role];
   });
 
-  /** Chỉ có giá trị khi mũ trắng vừa đoán và đoán trượt. */
+  /**
+   * Chỉ có giá trị ở đúng lần lộ diện của chính mũ trắng, khi đoán trượt.
+   *
+   * Engine giữ `whiteGuess` lại trong suốt phần còn lại của ván để làm lịch
+   * sử, nên nếu không chặn theo vai của người vừa bị loại thì mọi lần lộ diện
+   * về sau đều nhắc lại câu đoán cũ và gán nhầm nó cho người khác.
+   */
   readonly wrongGuess = computed(() => {
+    if (this.last()?.role !== 'WHITE') return null;
     const guess = this.session.state()?.whiteGuess ?? null;
     return guess === null || guess.correct ? null : guess.text;
   });

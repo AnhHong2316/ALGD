@@ -259,4 +259,24 @@ describe('RevealPage', () => {
     expect(text).not.toContain('Mũ trắng đoán');
     expect(text).not.toContain('không trúng');
   });
+
+  it('vòng sau không nhắc lại chuyện mũ trắng đoán trượt', async () => {
+    const { session } = await setupWrongWhiteGuess();
+
+    // Mũ trắng đã rời ván. Chơi tiếp một vòng rồi loại một dân làng.
+    await session.afterReveal();
+    expect(session.state()?.phase).toBe('SPEAKING');
+    await speakWholeRound(session);
+    await voteOut(session, aliveWithRole(session, 'CIVILIAN'));
+    expect(session.state()?.phase).toBe('REVEAL');
+
+    const fixture = TestBed.createComponent(RevealPage);
+    fixture.detectChanges();
+
+    // Lời đoán cũ vẫn nằm trong trạng thái ván vì engine giữ lại làm lịch sử.
+    // Nhưng nó thuộc về lần lộ diện trước; nhắc lại ở đây là gán nhầm cho
+    // người vừa bị loại, mà người đó thậm chí không phải mũ trắng.
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('Mũ trắng đoán');
+  });
 });
