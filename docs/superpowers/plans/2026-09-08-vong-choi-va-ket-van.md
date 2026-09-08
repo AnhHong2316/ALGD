@@ -2928,3 +2928,5 @@ Chơi được trọn ván từ đầu tới cuối, nhiều ván liên tiếp, 
 ## Bản kế hoạch tiếp theo
 
 Phần dẫn chuyện: `narration.vi.json`, đọc bằng giọng máy tiếng Việt, vài tiếng động, công tắc bật tắt âm thanh. Kèm màn bảng điểm, màn kho từ, màn cài đặt, và đóng gói APK.
+
+**Một cái bẫy để dành sẵn cho màn bảng điểm.** Task 2 khai `gameId` là trường bắt buộc của `GameRecord`, nhưng phép kiểm hình dạng `isScoreboard` chỉ kiểm `history` là mảng chứ không kiểm từng bản ghi — cố ý, để bảng điểm cũ lưu từ trước không bị xoá sạch. Hệ quả: kiểu dữ liệu nói mọi bản ghi đều có `gameId`, còn thực tế bản ghi cũ đọc lên có `undefined`, và TypeScript không cảnh báo gì. Chỗ nào **đọc** `gameId` ra khỏi `history` — dựng danh sách lịch sử, khử trùng lặp, làm khoá `track` cho `@for` — đều phải coi nó là có thể thiếu. Chỗ chỉ **so sánh** nó thì an toàn.
