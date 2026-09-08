@@ -1,1 +1,228 @@
-/* You can add global styles to this file, and also import other style files */
+/* ==========================================================================
+   Đêm ở làng — hệ thống thiết kế
+   Trò chơi diễn ra quanh bàn, buổi tối, một máy chuyền tay. Ba điều đó
+   quyết định mọi lựa chọn dưới đây: nền tối để không hắt sáng sang người
+   ngồi cạnh, chữ to để đọc được cách một sải tay, vùng bấm lớn để bấm
+   trúng khi đang cầm cốc.
+   ========================================================================== */
+
+:root {
+  --ink-900: #0b0e14;
+  --ink-800: #121722;
+  --ink-700: #1b2130;
+  --ink-600: #2a3244;
+
+  --lamp-500: #f2a65a;
+  --lamp-400: #ffbc77;
+  --lamp-glow: rgba(242, 166, 90, 0.16);
+
+  --paper-100: #ede7de;
+  --paper-400: #8a93a6;
+
+  --blood-500: #d9484b;
+
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-body: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  /* Vùng bấm nhỏ nhất. 56px là ngưỡng bấm trúng bằng ngón cái khi không nhìn kỹ. */
+  --tap: 56px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100dvh;
+  background: var(--ink-900);
+  color: var(--paper-100);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  /* Chặn kéo-chọn chữ và menu giữ-lâu của trình duyệt di động. Bắt buộc:
+     màn chia bài dùng thao tác nhấn giữ, mà mặc định nhấn giữ trên di động
+     sẽ bôi đen chữ hoặc mở menu sao chép — cả hai đều làm lộ từ bí mật. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.15;
+}
+
+/* --------------------------------------------------------------------------
+   Bố cục màn hình
+   -------------------------------------------------------------------------- */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 100dvh;
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5) var(--space-5);
+}
+
+.screen__eyebrow {
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paper-400);
+}
+
+.screen__title {
+  font-size: 2rem;
+}
+
+.screen__spacer {
+  flex: 1;
+}
+
+.screen__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* --------------------------------------------------------------------------
+   Nút
+   -------------------------------------------------------------------------- */
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  padding: 0 var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 90ms ease, background-color 120ms ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--lamp-500);
+  color: var(--ink-900);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--lamp-400);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--ink-600);
+  color: var(--paper-100);
+}
+
+.btn--quiet {
+  background: transparent;
+  color: var(--paper-400);
+  min-height: 44px;
+  font-weight: 400;
+}
+
+/* --------------------------------------------------------------------------
+   Ô nhập
+   -------------------------------------------------------------------------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field__label {
+  font-size: 0.875rem;
+  color: var(--paper-400);
+}
+
+.input {
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  background: var(--ink-800);
+  border: 1px solid var(--ink-600);
+  border-radius: var(--radius-md);
+  color: var(--paper-100);
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  /* Cho phép chọn chữ trong ô nhập, ngược với quy tắc chung ở body. */
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.input:focus {
+  outline: 2px solid var(--lamp-500);
+  outline-offset: 1px;
+}
+
+/* --------------------------------------------------------------------------
+   Tiện ích
+   -------------------------------------------------------------------------- */
+
+.muted {
+  color: var(--paper-400);
+  font-size: 0.9375rem;
+}
+
+.warning {
+  color: var(--blood-500);
+  font-size: 0.9375rem;
+}
+
+/* Vùng sáng như đèn dầu, đặt sau nội dung để tạo chiều sâu. */
+.lamp {
+  position: relative;
+}
+
+.lamp::before {
+  content: '';
+  position: absolute;
+  inset: -40% -20%;
+  background: radial-gradient(ellipse at 50% 40%, var(--lamp-glow), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lamp > * {
+  position: relative;
+  z-index: 1;
+}
