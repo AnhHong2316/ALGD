@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_GAME_CONFIG } from '../core/models';
 import { ActiveGameRepository } from '../data/repositories/active-game.repository';
 import { ScoreboardRepository } from '../data/repositories/scoreboard.repository';
@@ -274,6 +274,29 @@ describe('GameSessionStore', () => {
     expect(board.history[0].gameId).toBe(state.id);
     // Ba dân làng mỗi người 1 điểm, gián điệp 0.
     expect(Object.values(board.totals).filter((point) => point === 1)).toHaveLength(3);
+  });
+
+  it('hai ván mở trong cùng một mili giây vẫn có id khác nhau', async () => {
+    // Bảng điểm bỏ qua ván đã ghi dựa theo id. Nên hai ván trùng id nghĩa là
+    // ván thứ hai mất sạch điểm mà không có lỗi nào báo ra — đúng kiểu hỏng
+    // âm thầm khó lần nhất. Bấm "Chơi ván nữa" là đi thẳng vào đường này.
+    const frozen = vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000);
+    try {
+      const input = {
+        villageName: 'Ác Quỷ',
+        playerNames: NAMES,
+        config: { ...DEFAULT_GAME_CONFIG, spyCount: 1 },
+      };
+
+      await store.startNew(input);
+      const first = store.state()!.id;
+      await store.startNew(input);
+      const second = store.state()!.id;
+
+      expect(second).not.toBe(first);
+    } finally {
+      frozen.mockRestore();
+    }
   });
 
   it('ván đã kết thúc thì không còn là ván đang dở, và điểm không cộng thêm', async () => {

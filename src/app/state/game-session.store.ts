@@ -25,6 +25,19 @@ import { SettingsRepository } from '../data/repositories/settings.repository';
 import { WordBankRepository } from '../data/repositories/word-bank.repository';
 import { startNewGame } from '../data/start-new-game';
 
+/** Đếm số ván đã mở trong lần chạy app này. */
+let gamesStarted = 0;
+
+/**
+ * Id của ván. Có cả mốc thời gian lẫn số đếm, vì mốc thời gian một mình là
+ * chưa đủ: bấm "Chơi ván nữa" mở ván mới ngay sau ván cũ, hai ván rơi vào cùng
+ * một mili giây là chuyện có thật. Mà id trùng thì bảng điểm — vốn bỏ qua ván
+ * đã ghi theo id — sẽ nuốt luôn điểm của ván sau, không lỗi, không dấu vết.
+ */
+function newGameId(): string {
+  return `g-${Date.now()}-${++gamesStarted}`;
+}
+
 export interface StartNewInput {
   villageName: string;
   playerNames: string[];
@@ -128,7 +141,7 @@ export class GameSessionStore {
   async startNew(input: StartNewInput): Promise<void> {
     const { result } = await startNewGame({
       wordBank: this.wordBank,
-      gameId: `g-${Date.now()}`,
+      gameId: newGameId(),
       villageName: input.villageName,
       playerNames: input.playerNames,
       config: input.config,
