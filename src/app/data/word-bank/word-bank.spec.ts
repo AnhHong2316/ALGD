@@ -85,4 +85,10 @@ describe('kho từ đóng gói sẵn', () => {
       expect([...levels].sort(), `chủ đề ${topic}`).toEqual(['EASY', 'HARD', 'MEDIUM']);
     }
   });
+
+  it('đủ cả tám chủ đề chính thức', () => {
+    const present = new Set(PACKAGED_PAIRS.map((pair) => pair.topic));
+
+    expect([...present].sort()).toEqual([...TOPICS].sort());
+  });
 });

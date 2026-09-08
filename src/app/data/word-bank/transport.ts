@@ -1,0 +1,26 @@
+import { PackagedPair } from './types';
+
+export const TRANSPORT_PAIRS = [
+  { id: 'gt-001', wordA: 'xe máy', wordB: 'xe đạp', topic: 'Giao thông', difficulty: 'MEDIUM' },
+  { id: 'gt-002', wordA: 'máy bay', wordB: 'trực thăng', topic: 'Giao thông', difficulty: 'MEDIUM' },
+  { id: 'gt-003', wordA: 'tàu hỏa', wordB: 'tàu điện', topic: 'Giao thông', difficulty: 'HARD' },
+  { id: 'gt-004', wordA: 'xe buýt', wordB: 'xe khách', topic: 'Giao thông', difficulty: 'HARD' },
+  { id: 'gt-005', wordA: 'thuyền buồm', wordB: 'ca nô', topic: 'Giao thông', difficulty: 'MEDIUM' },
+  { id: 'gt-006', wordA: 'đèn giao thông', wordB: 'biển báo', topic: 'Giao thông', difficulty: 'MEDIUM' },
+  { id: 'gt-007', wordA: 'cây xăng', wordB: 'bãi đỗ xe', topic: 'Giao thông', difficulty: 'EASY' },
+  { id: 'gt-008', wordA: 'mũ bảo hiểm', wordB: 'dây an toàn', topic: 'Giao thông', difficulty: 'EASY' },
+  { id: 'gt-009', wordA: 'vỉa hè', wordB: 'lòng đường', topic: 'Giao thông', difficulty: 'HARD' },
+  { id: 'gt-010', wordA: 'cầu vượt', wordB: 'hầm chui', topic: 'Giao thông', difficulty: 'MEDIUM' },
+  { id: 'gt-011', wordA: 'bến xe', wordB: 'sân bay', topic: 'Giao thông', difficulty: 'EASY' },
+  { id: 'gt-012', wordA: 'tài xế', wordB: 'hành khách', topic: 'Giao thông', difficulty: 'MEDIUM' },
+  { id: 'gt-013', wordA: 'xe cứu thương', wordB: 'xe cứu hỏa', topic: 'Giao thông', difficulty: 'HARD' },
+  { id: 'gt-014', wordA: 'ô tô', wordB: 'xe tải', topic: 'Giao thông', difficulty: 'MEDIUM' },
+  { id: 'gt-015', wordA: 'đường cao tốc', wordB: 'đường quốc lộ', topic: 'Giao thông', difficulty: 'HARD' },
+  { id: 'gt-016', wordA: 'bến phà', wordB: 'cầu treo', topic: 'Giao thông', difficulty: 'EASY' },
+  { id: 'gt-017', wordA: 'đường sắt', wordB: 'đường thủy', topic: 'Giao thông', difficulty: 'MEDIUM' },
+  { id: 'gt-018', wordA: 'vé máy bay', wordB: 'vé tàu', topic: 'Giao thông', difficulty: 'HARD' },
+  { id: 'gt-019', wordA: 'phi công', wordB: 'thuyền trưởng', topic: 'Giao thông', difficulty: 'MEDIUM' },
+  { id: 'gt-020', wordA: 'xích lô', wordB: 'xe ba gác', topic: 'Giao thông', difficulty: 'MEDIUM' },
+  { id: 'gt-021', wordA: 'đường một chiều', wordB: 'đường hai chiều', topic: 'Giao thông', difficulty: 'HARD' },
+  { id: 'gt-022', wordA: 'taxi', wordB: 'xe ôm', topic: 'Giao thông', difficulty: 'EASY' },
+] as const satisfies readonly PackagedPair[];

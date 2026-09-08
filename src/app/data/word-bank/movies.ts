@@ -1,0 +1,26 @@
+import { PackagedPair } from './types';
+
+export const MOVIE_PAIRS = [
+  { id: 'pa-001', wordA: 'siêu nhân', wordB: 'người nhện', topic: 'Phim và nhân vật', difficulty: 'MEDIUM' },
+  { id: 'pa-002', wordA: 'phim hoạt hình', wordB: 'phim tài liệu', topic: 'Phim và nhân vật', difficulty: 'EASY' },
+  { id: 'pa-003', wordA: 'phim kinh dị', wordB: 'phim hành động', topic: 'Phim và nhân vật', difficulty: 'MEDIUM' },
+  { id: 'pa-004', wordA: 'ông bụt', wordB: 'bà tiên', topic: 'Phim và nhân vật', difficulty: 'HARD' },
+  { id: 'pa-005', wordA: 'Tôn Ngộ Không', wordB: 'Trư Bát Giới', topic: 'Phim và nhân vật', difficulty: 'MEDIUM' },
+  { id: 'pa-006', wordA: 'phù thủy', wordB: 'thầy pháp', topic: 'Phim và nhân vật', difficulty: 'HARD' },
+  { id: 'pa-007', wordA: 'đạo diễn', wordB: 'nhà sản xuất', topic: 'Phim và nhân vật', difficulty: 'HARD' },
+  { id: 'pa-008', wordA: 'rạp chiếu phim', wordB: 'sân khấu kịch', topic: 'Phim và nhân vật', difficulty: 'MEDIUM' },
+  { id: 'pa-009', wordA: 'công chúa', wordB: 'hoàng tử', topic: 'Phim và nhân vật', difficulty: 'MEDIUM' },
+  { id: 'pa-010', wordA: 'người hùng', wordB: 'kẻ phản diện', topic: 'Phim và nhân vật', difficulty: 'MEDIUM' },
+  { id: 'pa-011', wordA: 'phim hài', wordB: 'phim tâm lý', topic: 'Phim và nhân vật', difficulty: 'EASY' },
+  { id: 'pa-012', wordA: 'diễn viên chính', wordB: 'diễn viên phụ', topic: 'Phim và nhân vật', difficulty: 'HARD' },
+  { id: 'pa-013', wordA: 'Thạch Sanh', wordB: 'Lý Thông', topic: 'Phim và nhân vật', difficulty: 'MEDIUM' },
+  { id: 'pa-014', wordA: 'nàng tiên cá', wordB: 'cô bé lọ lem', topic: 'Phim và nhân vật', difficulty: 'MEDIUM' },
+  { id: 'pa-015', wordA: 'chú Cuội', wordB: 'chị Hằng', topic: 'Phim và nhân vật', difficulty: 'HARD' },
+  { id: 'pa-016', wordA: 'quái vật', wordB: 'người ngoài hành tinh', topic: 'Phim và nhân vật', difficulty: 'MEDIUM' },
+  { id: 'pa-017', wordA: 'thám tử', wordB: 'cảnh sát', topic: 'Phim và nhân vật', difficulty: 'HARD' },
+  { id: 'pa-018', wordA: 'ninja', wordB: 'samurai', topic: 'Phim và nhân vật', difficulty: 'MEDIUM' },
+  { id: 'pa-019', wordA: 'cao bồi', wordB: 'cướp biển', topic: 'Phim và nhân vật', difficulty: 'EASY' },
+  { id: 'pa-020', wordA: 'biên kịch', wordB: 'quay phim', topic: 'Phim và nhân vật', difficulty: 'HARD' },
+  { id: 'pa-021', wordA: 'phụ đề', wordB: 'lồng tiếng', topic: 'Phim và nhân vật', difficulty: 'MEDIUM' },
+  { id: 'pa-022', wordA: 'phim chiếu rạp', wordB: 'phim truyền hình', topic: 'Phim và nhân vật', difficulty: 'EASY' },
+] as const satisfies readonly PackagedPair[];
