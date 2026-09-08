@@ -5,6 +5,11 @@ import { Inject, Injectable } from '@angular/core';
 import { STORAGE_PORT } from '../storage/storage.token';
 
 export interface GameRecord {
+  /**
+   * Id của ván. Có mặt để ghi điểm trở thành thao tác bất biến: màn kết ván
+   * được mở lại bao nhiêu lần cũng chỉ cộng điểm một lần.
+   */
+  gameId: string;
   villageName: string;
   /** Chuỗi ISO. Truyền vào từ ngoài để tầng này vẫn thuần. */
   playedAt: string;
@@ -55,6 +60,10 @@ export class ScoreboardRepository {
 
   async recordGame(record: GameRecord): Promise<void> {
     const board = await this.load();
+
+    // Ván này ghi rồi thì thôi. Bản ghi cũ chưa có gameId sẽ không khớp với
+    // bất kỳ id thật nào, nên chúng không chặn ván mới.
+    if (board.history.some((saved) => saved.gameId === record.gameId)) return;
 
     const totals = { ...board.totals };
     for (const [name, points] of Object.entries(record.points)) {
