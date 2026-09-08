@@ -2635,7 +2635,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 342 cộng 6 mới, thành **348**. Báo lại con số thật.
+Expected: PASS — 342 cộng 13 mới, thành **355**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -2859,7 +2859,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 348 cộng 3 mới, thành **351**. Báo lại con số thật.
+Expected: PASS — 355 cộng 3 mới, thành **358**. Báo lại con số thật.
 
 - [ ] **Step 5: Build để chắc mọi chunk lười đều dịch được**
 
