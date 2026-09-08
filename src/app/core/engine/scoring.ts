@@ -1,28 +1,41 @@
-import { GameState, ScoreRules } from '../models';
+import { GameState, Role, ScoreRules } from '../models';
+
+/** Phe thắng nào thì vai nào được điểm. Mũ trắng đứng riêng, không theo phe nào. */
+const WINNING_ROLE: Record<string, Role> = {
+  CIVILIANS: 'CIVILIAN',
+  SPIES: 'SPY',
+  WHITE: 'WHITE',
+};
 
 /**
- * Trả về điểm cộng của từng người trong ván này.
- * Mọi người chơi đều có mặt trong kết quả, người thua nhận 0, để màn kết ván
- * hiển thị được đủ danh sách mà không phải tự bù chỗ trống.
+ * Điểm cộng của một ván, khoá theo TÊN người chơi.
+ *
+ * Khoá theo tên chứ không theo id vì bảng điểm cộng dồn qua nhiều ván, mà id
+ * chỉ sống trong đúng một ván. Tên đã được khử trùng lặp từ lúc lập danh sách
+ * nên không có hai người cùng tên trong một ván.
+ *
+ * Duyệt `players` chứ không duyệt `aliveIds`: người bị loại giữa chừng vẫn
+ * được điểm nếu phe của họ thắng.
+ *
+ * Người thua vẫn có mặt trong bảng với 0 điểm, để họ hiện trên bảng điểm tích
+ * luỹ thay vì biến mất.
  */
-export function awardPoints(
-  state: GameState,
-  rules: ScoreRules,
-): Record<string, number> {
-  const points: Record<string, number> = {};
+export function awardPoints(state: GameState, rules: ScoreRules): Record<string, number> {
+  if (state.outcome === null) {
+    throw new Error('awardPoints: ván chưa kết thúc, chưa tính điểm được');
+  }
 
+  const winningRole = WINNING_ROLE[state.outcome];
+  const reward: Record<string, number> = {
+    CIVILIAN: rules.civilianWin,
+    SPY: rules.spyWin,
+    WHITE: rules.whiteWin,
+  };
+
+  const points: Record<string, number> = {};
   for (const player of state.players) {
     const role = state.assignments[player.id].role;
-
-    if (state.outcome === 'CIVILIANS' && role === 'CIVILIAN') {
-      points[player.id] = rules.civilianWin;
-    } else if (state.outcome === 'SPIES' && role === 'SPY') {
-      points[player.id] = rules.spyWin;
-    } else if (state.outcome === 'WHITE' && role === 'WHITE') {
-      points[player.id] = rules.whiteWin;
-    } else {
-      points[player.id] = 0;
-    }
+    points[player.name] = role === winningRole ? reward[role] : 0;
   }
 
   return points;
