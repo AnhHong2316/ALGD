@@ -11,6 +11,18 @@ const WHITE: CardContent = {
   note: 'Bạn không có từ nào',
 };
 
+/** Cùng hai người trên nhưng ván bật Bật mí, nên thẻ có ghi vai. */
+const CIVILIAN_TOLD: CardContent = {
+  roleLabel: 'Bạn là DÂN LÀNG',
+  word: 'con mèo',
+  note: null,
+};
+const SPY_TOLD: CardContent = {
+  roleLabel: 'Bạn là GIÁN ĐIỆP',
+  word: 'con chó',
+  note: null,
+};
+
 function render(content: CardContent) {
   const fixture = TestBed.createComponent(SecretCard);
   fixture.componentRef.setInput('content', content);
@@ -83,6 +95,32 @@ describe('SecretCard', () => {
     // hai lần dựng, hãy BÁO LẠI thay vì nới lỏng phép so sánh. Đây là bằng
     // chứng duy nhất kiểm được bằng máy rằng thẻ không lộ vai.
     expect(civilianHtml.replace('con mèo', 'TU')).toBe(spyHtml.replace('con chó', 'TU'));
+  });
+
+  it('khi bật Bật mí, thẻ dân làng và thẻ gián điệp vẫn có cùng cấu trúc HTML', () => {
+    const civilianFixture = render(CIVILIAN_TOLD);
+    civilianFixture.componentInstance.hold();
+    civilianFixture.detectChanges();
+    const civilianHtml = (civilianFixture.nativeElement as HTMLElement).innerHTML;
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ imports: [SecretCard] });
+    const spyFixture = render(SPY_TOLD);
+    spyFixture.componentInstance.hold();
+    spyFixture.detectChanges();
+    const spyHtml = (spyFixture.nativeElement as HTMLElement).innerHTML;
+
+    // Test ở trên chỉ so hai thẻ đều KHÔNG ghi vai, nên nó không thể bắt được
+    // thứ chỉ xuất hiện khi có vai: một lớp CSS, một thuộc tính, một nhánh
+    // template rẽ theo vai. Ở chế độ Bật mí thì vai nằm sẵn trong thẻ, nên chỗ
+    // đó mới là chỗ dễ rò.
+    //
+    // Thay cả vai lẫn từ bằng chuỗi trung tính: phần còn lại phải giống hệt.
+    // Nếu test này đỏ, BÁO LẠI thay vì nới lỏng phép so sánh.
+    const normalize = (html: string) =>
+      html.replace(/Bạn là (DÂN LÀNG|GIÁN ĐIỆP)/, 'VAI').replace(/con (mèo|chó)/, 'TU');
+
+    expect(normalize(civilianHtml)).toBe(normalize(spyHtml));
   });
 
   it('nhãn vai nằm trong khung rộng cố định', () => {
