@@ -3,6 +3,12 @@ import { Router } from '@angular/router';
 import { GameSessionStore } from '../../state/game-session.store';
 import { NewGameDraftStore } from '../../state/new-game-draft.store';
 import { DealPage } from './deal.page';
+import { EndPage } from './end.page';
+import { RevealPage } from './reveal.page';
+import { SpeakingPage } from './speaking.page';
+import { TiePage } from './tie.page';
+import { VotePage } from './vote.page';
+import { WhiteGuessPage } from './white-guess.page';
 
 /**
  * Vỏ của mọi màn trong ván. Chọn màn theo `phase` chứ không theo địa chỉ URL,
@@ -11,7 +17,15 @@ import { DealPage } from './deal.page';
  */
 @Component({
   selector: 'app-game-page',
-  imports: [DealPage],
+  imports: [
+    DealPage,
+    SpeakingPage,
+    VotePage,
+    TiePage,
+    RevealPage,
+    WhiteGuessPage,
+    EndPage,
+  ],
   template: `
     @let state = session.state();
     @if (state === null) {
@@ -25,15 +39,23 @@ import { DealPage } from './deal.page';
         @case ('DEALING') {
           <app-deal-page />
         }
-        @default {
-          <div class="screen">
-            <div class="screen__spacer"></div>
-            <h1 class="screen__title">Chia bài xong</h1>
-            <p class="muted">
-              Vòng nói, vote và kết ván nằm ở bản kế hoạch tiếp theo.
-            </p>
-            <div class="screen__spacer"></div>
-          </div>
+        @case ('SPEAKING') {
+          <app-speaking-page />
+        }
+        @case ('VOTING') {
+          <app-vote-page />
+        }
+        @case ('TIE_BREAK') {
+          <app-tie-page />
+        }
+        @case ('REVEAL') {
+          <app-reveal-page />
+        }
+        @case ('WHITE_GUESS') {
+          <app-white-guess-page />
+        }
+        @case ('ENDED') {
+          <app-end-page />
         }
       }
     }
