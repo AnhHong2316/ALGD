@@ -1,6 +1,8 @@
 import { DEFAULT_SCORE_RULES, ScoreRules } from '../../core/models';
 import { JsonStore } from '../json-store';
 import { StoragePort } from '../storage/storage-port';
+import { Inject, Injectable } from '@angular/core';
+import { STORAGE_PORT } from '../storage/storage.token';
 
 export type SoundLevel = 'OFF' | 'SFX_ONLY' | 'FULL';
 
@@ -55,10 +57,11 @@ function isAppSettings(value: unknown): value is AppSettings {
   );
 }
 
+@Injectable()
 export class SettingsRepository {
   private readonly store: JsonStore<AppSettings>;
 
-  constructor(storage: StoragePort) {
+  constructor(@Inject(STORAGE_PORT) storage: StoragePort) {
     this.store = new JsonStore(storage, 'settings', isAppSettings, defaultSettings);
   }
 

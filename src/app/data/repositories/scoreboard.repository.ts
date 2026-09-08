@@ -1,6 +1,8 @@
 import { Outcome } from '../../core/models';
 import { JsonStore } from '../json-store';
 import { StoragePort } from '../storage/storage-port';
+import { Inject, Injectable } from '@angular/core';
+import { STORAGE_PORT } from '../storage/storage.token';
 
 export interface GameRecord {
   villageName: string;
@@ -39,10 +41,11 @@ function isScoreboard(value: unknown): value is Scoreboard {
  * một ván còn bảng điểm phải cộng dồn qua nhiều ván. Hệ quả: đổi tên là mất
  * điểm cũ, chấp nhận được cho một app chơi tại chỗ.
  */
+@Injectable()
 export class ScoreboardRepository {
   private readonly store: JsonStore<Scoreboard>;
 
-  constructor(storage: StoragePort) {
+  constructor(@Inject(STORAGE_PORT) storage: StoragePort) {
     this.store = new JsonStore(storage, 'scoreboard', isScoreboard, emptyScoreboard);
   }
 
