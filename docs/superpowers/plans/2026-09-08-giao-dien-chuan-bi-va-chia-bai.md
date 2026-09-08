@@ -1082,6 +1082,7 @@ git commit -m "feat: them trang chu"
 Tạo `src/app/features/setup/players.page.spec.ts`:
 
 ```ts
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -1091,12 +1092,22 @@ import { STORAGE_PORT } from '../../data/storage/storage.token';
 import { NewGameDraftStore } from '../../state/new-game-draft.store';
 import { PlayersPage } from './players.page';
 
+/**
+ * Trang giữ chỗ cho tuyến /cau-hinh, chỉ tồn tại trong test này.
+ *
+ * Cần thiết vì Router.navigate() trả về promise bị từ chối khi không khớp
+ * tuyến nào. Màn cấu hình thật xuất hiện ở Task 5; ở đây ta chỉ cần một
+ * đích hợp lệ để phép điều hướng thành công thay vì ném lỗi.
+ */
+@Component({ template: '' })
+class StubConfigPage {}
+
 function setup() {
   const storage = new MemoryStorage();
   TestBed.configureTestingModule({
     imports: [PlayersPage],
     providers: [
-      provideRouter([]),
+      provideRouter([{ path: 'cau-hinh', component: StubConfigPage }]),
       { provide: STORAGE_PORT, useValue: storage },
       PlayersRepository,
       NewGameDraftStore,
@@ -1468,6 +1479,7 @@ git commit -m "feat: them man lap danh sach nguoi choi"
 Tạo `src/app/features/setup/config.page.spec.ts`:
 
 ```ts
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -1477,12 +1489,18 @@ import { STORAGE_PORT } from '../../data/storage/storage.token';
 import { NewGameDraftStore } from '../../state/new-game-draft.store';
 import { ConfigPage } from './config.page';
 
+/** Trang giữ chỗ cho tuyến /van, chỉ tồn tại trong test này. Router.navigate()
+ *  trả về promise bị từ chối khi không khớp tuyến nào, nên phải có một đích
+ *  hợp lệ thì phép điều hướng mới thành công. Màn ván thật ở Task 6. */
+@Component({ template: '' })
+class StubGamePage {}
+
 function setup(playerCount = 6) {
   const storage = new MemoryStorage();
   TestBed.configureTestingModule({
     imports: [ConfigPage],
     providers: [
-      provideRouter([]),
+      provideRouter([{ path: 'van', component: StubGamePage }]),
       { provide: STORAGE_PORT, useValue: storage },
       SettingsRepository,
       NewGameDraftStore,
