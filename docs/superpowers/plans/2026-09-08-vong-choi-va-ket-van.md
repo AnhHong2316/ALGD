@@ -4,7 +4,7 @@
 
 **Goal:** Nối nốt phần còn thiếu để chơi trọn một ván: vòng nói có đồng hồ, vote, xử hoà, lộ danh tính, mũ trắng đoán từ, và màn kết ván có ghi điểm.
 
-**Architecture:** Engine đã có sẵn toàn bộ luật và đã được kiểm kỹ ở kế hoạch 1 — bản kế hoạch này **không sửa engine**, chỉ bọc nó bằng màn hình. Mỗi pha của ván là một component riêng, và `GamePage` chọn component theo `state.phase` chứ không theo địa chỉ URL. Thêm đúng một hàm thuần mới ở tầng lõi: tính điểm.
+**Architecture:** Engine đã có sẵn toàn bộ luật chơi và đã được kiểm kỹ ở kế hoạch 1 — bản kế hoạch này **không đụng vào luật chơi**, chỉ bọc engine bằng màn hình. Mỗi pha của ván là một component riêng, và `GamePage` chọn component theo `state.phase` chứ không theo địa chỉ URL. Ngoại lệ duy nhất là Task 1: sửa hàm tính điểm sẵn có ở tầng lõi cho khoá theo tên người chơi thay vì theo id.
 
 **Tech Stack:** Angular 21 standalone + zoneless + signals, Vitest, `@angular/build:unit-test`.
 
@@ -99,9 +99,17 @@ Không thêm tuyến đường mới. Mọi màn trong ván đều nằm dưới
 
 ## Task 1: Hàm tính điểm
 
+> **Đính chính sau khi làm xong.** Task này viết ra với giả định `scoring.ts`
+> chưa tồn tại. Sai: nó đã có từ kế hoạch 1 (commit `d9be074`), và bản cũ khoá
+> kết quả theo `player.id`. Nhưng `ScoreboardRepository` cộng dồn điểm theo
+> **tên** qua nhiều ván, mà id chỉ sống trong đúng một ván — nên nếu để nguyên,
+> Task 4 sẽ làm vỡ vụn mọi tổng điểm ngay khi nó nối `awardPoints` vào
+> `recordGame`. Task này do đó là một bản viết lại, không phải tạo mới, và số
+> test không tăng: 6 test cũ bị thay bằng 6 test mới, tổng vẫn là **288**.
+
 **Files:**
-- Create: `src/app/core/engine/scoring.ts`
-- Test: `src/app/core/engine/scoring.spec.ts`
+- Modify: `src/app/core/engine/scoring.ts` (viết lại: khoá theo tên thay vì theo id)
+- Test: `src/app/core/engine/scoring.spec.ts` (viết lại)
 
 Luật ở mục 3.8 của bản thiết kế. Hai điểm dễ bỏ sót: điểm trao cho **mọi người thuộc phe thắng kể cả người đã bị loại**, nên phải duyệt `players` chứ không duyệt `aliveIds`; và **mũ trắng không thuộc phe nào**, mũ trắng thắng thì chỉ mình mũ trắng có điểm.
 
@@ -229,7 +237,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: FAIL — không phân giải được `./scoring`.
+Expected: FAIL — 6 test đỏ. Không phải lỗi "không phân giải được module": file đã tồn tại, nên nó đỏ vì khoá sai (`p-Minh` thay vì `Minh`) và vì bản cũ không ném lỗi khi ván chưa kết thúc.
 
 - [ ] **Step 3: Viết hàm tính điểm**
 
@@ -287,7 +295,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 288 cộng 6 mới, thành **294**. Báo lại con số thật.
+Expected: PASS — vẫn **288**. Sáu test cũ bị thay bằng sáu test mới nên tổng không đổi.
 
 - [ ] **Step 5: Commit**
 
@@ -424,7 +432,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 294 cộng 2 mới, thành **296**. Báo lại con số thật.
+Expected: PASS — 288 cộng 2 mới, thành **290**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -662,7 +670,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 296 cộng 7 mới, thành **303**. Báo lại con số thật.
+Expected: PASS — 290 cộng 7 mới, thành **297**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -863,7 +871,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 303 cộng 2 mới, thành **305**. Báo lại con số thật.
+Expected: PASS — 297 cộng 2 mới, thành **299**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -1202,7 +1210,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 305 cộng 8 mới, thành **313**. Báo lại con số thật.
+Expected: PASS — 299 cộng 8 mới, thành **307**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -1531,7 +1539,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 313 cộng 7 mới, thành **320**. Báo lại con số thật.
+Expected: PASS — 307 cộng 7 mới, thành **314**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -1741,7 +1749,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 320 cộng 4 mới, thành **324**. Báo lại con số thật.
+Expected: PASS — 314 cộng 4 mới, thành **318**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -2000,7 +2008,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 324 cộng 5 mới, thành **329**. Báo lại con số thật.
+Expected: PASS — 318 cộng 5 mới, thành **323**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -2249,7 +2257,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 329 cộng 6 mới, thành **335**. Báo lại con số thật.
+Expected: PASS — 323 cộng 6 mới, thành **329**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -2607,7 +2615,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 335 cộng 6 mới, thành **341**. Báo lại con số thật.
+Expected: PASS — 329 cộng 6 mới, thành **335**. Báo lại con số thật.
 
 - [ ] **Step 5: Commit**
 
@@ -2831,7 +2839,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS — 341 cộng 3 mới, thành **344**. Báo lại con số thật.
+Expected: PASS — 335 cộng 3 mới, thành **338**. Báo lại con số thật.
 
 - [ ] **Step 5: Build để chắc mọi chunk lười đều dịch được**
 
