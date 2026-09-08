@@ -688,7 +688,13 @@ git commit -m "feat: kho phien boc cac hanh dong trong van"
 - Modify: `src/app/state/game-session.store.ts`
 - Test: `src/app/state/game-session.store.spec.ts`
 
-Kho phiên tự ghi điểm mỗi khi trạng thái rơi vào pha `ENDED`, kể cả khi trạng thái đó đến từ việc khôi phục ván. Nhờ Task 2 làm phép ghi bất biến nên gọi thừa không hại gì.
+Kho phiên tự ghi điểm mỗi khi trạng thái rơi vào pha `ENDED`. Nhờ Task 2 làm phép ghi bất biến nên gọi thừa không hại gì.
+
+> **Đính chính sau khi làm xong.** Bản đầu của task này còn gọi thêm `recordIfEnded` trong `resume()`, với lý lẽ "app có thể bị đóng ngay lúc ván vừa kết thúc, trước khi kịp ghi điểm". Nhánh đó là **code chết**: `ActiveGameRepository.load()` cố ý trả `null` cho ván đã kết thúc (thiết kế từ kế hoạch 2), nên `resume()` không bao giờ nhìn thấy một ván `ENDED` để mà ghi. Đã bỏ nhánh đó.
+>
+> Thay vào đó `apply()` **ghi bảng điểm trước rồi mới lưu ván**. Đóng app giữa hai dòng đó thì ván còn nằm ở bước trước, người chơi bấm tiếp một cái là tới pha kết lần nữa, và phép ghi bất biến lo phần không cộng đúp. Để thứ tự ngược lại thì ván kết thúc đã nằm trên máy nhưng điểm mất hẳn, vì kho ván đang dở không trả nó về.
+>
+> Kèm theo: test tên `'khôi phục ván đã kết thúc thì không cộng điểm lần nữa'` **xanh rỗng ruột** — nó không chạm được vào đường đi mà tên nó nói tới, vì `resume()` trả về `null`. Đã đổi thành `'ván đã kết thúc thì không còn là ván đang dở, và điểm không cộng thêm'`, có thêm `expect(store.hasGame()).toBe(false)` để ghi đúng hành vi thật.
 
 **Thứ tự quan trọng:** ghi bảng điểm xong rồi `apply()` mới trả về. Màn kết ván đọc bảng điểm sau đó, nên số nó đọc được là số đã cộng, không phải số cũ.
 
@@ -2917,9 +2923,10 @@ Ghi lại kết quả từng mục:
 
 - [ ] **Step 5: Kiểm khôi phục và chống cộng đúp**
 
-1. Đang ở màn kết ván, **tải lại trang (F5)**.
-2. Về trang chủ → **Chơi tiếp ván đang dở** → quay lại đúng màn kết ván.
-3. **Điểm tích luỹ phải giữ nguyên, không tăng thêm.** Đây là mục quan trọng nhất của bước này.
+1. Đang chơi **giữa chừng** (chưa xong ván), tải lại trang (F5) → về trang chủ → **Chơi tiếp ván đang dở** → quay lại đúng bước đang dở.
+2. Chơi cho xong ván đó.
+3. Đang ở màn kết ván, **tải lại trang (F5)**. Trang chủ **KHÔNG** hiện nút "Chơi tiếp ván đang dở" — đúng như thiết kế: ván xong rồi thì không còn là ván đang dở, kết quả đã nằm vĩnh viễn trong bảng điểm.
+4. Bắt đầu ván mới và chơi xong. **Điểm tích luỹ phải là tổng của các ván, không có ván nào bị tính hai lần.**
 
 - [ ] **Step 6: Chạy test và build lần cuối**
 
