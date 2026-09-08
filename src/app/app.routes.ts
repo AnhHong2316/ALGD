@@ -10,5 +10,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/setup/players.page').then((m) => m.PlayersPage),
   },
+  {
+    path: 'cau-hinh',
+    loadComponent: () => import('./features/setup/config.page').then((m) => m.ConfigPage),
+  },
   { path: '**', redirectTo: '' },
 ];
