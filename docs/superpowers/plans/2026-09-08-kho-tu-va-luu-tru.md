@@ -2040,7 +2040,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS, tổng 207 + 12 = 219.
+Expected: PASS, tổng 207 + 11 = 218.
 
 - [ ] **Step 5: Commit**
 
@@ -2362,7 +2362,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS, tổng 219 + 11 = 230.
+Expected: PASS, tổng 218 + 11 = 229.
 
 - [ ] **Step 6: Commit**
 
@@ -2614,7 +2614,7 @@ cd /c/SRC/ai-la-gian-diep
 npm test
 ```
 
-Expected: PASS, tổng 230 + 7 = 237.
+Expected: PASS, tổng 229 + 7 = 236.
 
 - [ ] **Step 5: Kiểm tra build**
 
