@@ -173,10 +173,6 @@ export class GameSessionStore {
     const saved = await this.activeGame.load();
     this._state.set(saved);
     this._events.set([]);
-
-    // App có thể đã bị đóng ngay lúc ván vừa kết thúc, trước khi kịp ghi điểm.
-    // Gọi lại ở đây là an toàn vì phép ghi bất biến theo gameId.
-    if (saved !== null) await this.recordIfEnded(saved);
   }
 
   async abandon(): Promise<void> {
@@ -200,8 +196,14 @@ export class GameSessionStore {
   private async apply(state: GameState, events: NarrationEvent[]): Promise<void> {
     this._state.set(state);
     this._events.set(events);
-    await this.activeGame.save(state);
+
+    // Ghi bảng điểm TRƯỚC khi lưu ván. Nếu app bị đóng giữa hai dòng này thì
+    // ván còn nằm ở bước trước đó, người chơi bấm tiếp một cái là tới pha kết
+    // lần nữa, và phép ghi bất biến theo gameId lo phần không cộng đúp. Đảo
+    // thứ tự lại thì ván kết thúc đã nằm trên máy nhưng điểm mất hẳn, vì kho
+    // ván đang dở cố ý không trả về ván đã kết thúc.
     await this.recordIfEnded(state);
+    await this.activeGame.save(state);
   }
 
   /**

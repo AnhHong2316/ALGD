@@ -276,7 +276,7 @@ describe('GameSessionStore', () => {
     expect(Object.values(board.totals).filter((point) => point === 1)).toHaveLength(3);
   });
 
-  it('khôi phục ván đã kết thúc thì không cộng điểm lần nữa', async () => {
+  it('ván đã kết thúc thì không còn là ván đang dở, và điểm không cộng thêm', async () => {
     await store.startNew({
       villageName: 'Ác Quỷ',
       playerNames: NAMES,
@@ -303,6 +303,11 @@ describe('GameSessionStore', () => {
     // Người chơi tắt app ở màn kết ván rồi mở lại.
     store.clearInMemory();
     await store.resume();
+
+    // Kho ván đang dở cố ý bỏ qua ván đã kết thúc, nên mở lại app sau khi
+    // chơi xong là về trang chủ chứ không quay lại màn kết ván. Kết quả ván
+    // đã nằm vĩnh viễn trong bảng điểm rồi.
+    expect(store.hasGame()).toBe(false);
 
     const after = await TestBed.inject(ScoreboardRepository).load();
     expect(after.totals).toEqual(before.totals);
