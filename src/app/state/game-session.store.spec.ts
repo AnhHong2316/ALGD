@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_GAME_CONFIG } from '../core/models';
 import { ActiveGameRepository } from '../data/repositories/active-game.repository';
+import { ScoreboardRepository } from '../data/repositories/scoreboard.repository';
+import { SettingsRepository } from '../data/repositories/settings.repository';
 import { WordBankRepository } from '../data/repositories/word-bank.repository';
 import { MemoryStorage } from '../data/storage/memory-storage';
 import { STORAGE_PORT } from '../data/storage/storage.token';
@@ -21,6 +23,8 @@ describe('GameSessionStore', () => {
         { provide: STORAGE_PORT, useValue: storage },
         WordBankRepository,
         ActiveGameRepository,
+        ScoreboardRepository,
+        SettingsRepository,
         GameSessionStore,
       ],
     });
@@ -235,5 +239,73 @@ describe('GameSessionStore', () => {
     expect(store.lastEliminatedName()).toBeNull();
     expect(store.alivePlayers()).toEqual([]);
     expect(store.roundsLeftBeforeVote()).toBe(0);
+  });
+
+  it('ván kết thúc thì tự ghi vào bảng điểm', async () => {
+    // Đội hình 4 người, 1 gián điệp, không mũ trắng, vote mở ngay từ vòng 1.
+    await store.startNew({
+      villageName: 'Ác Quỷ',
+      playerNames: NAMES,
+      config: {
+        ...DEFAULT_GAME_CONFIG,
+        spyCount: 1,
+        hasWhite: false,
+        minRoundsBeforeVote: 1,
+      },
+    });
+    for (let i = 0; i < NAMES.length; i++) {
+      await store.revealNext();
+    }
+    for (let i = 0; i < NAMES.length; i++) {
+      await store.nextSpeaker();
+    }
+
+    // Loại đúng gián điệp: hết gián điệp, không có mũ trắng, dân làng thắng.
+    const state = store.state()!;
+    const spyId = state.aliveIds.find((id) => state.assignments[id].role === 'SPY')!;
+    await store.vote({ [spyId]: 3 });
+    await store.afterReveal();
+
+    expect(store.state()?.phase).toBe('ENDED');
+    expect(store.state()?.outcome).toBe('CIVILIANS');
+
+    const board = await TestBed.inject(ScoreboardRepository).load();
+    expect(board.history).toHaveLength(1);
+    expect(board.history[0].gameId).toBe(state.id);
+    // Ba dân làng mỗi người 1 điểm, gián điệp 0.
+    expect(Object.values(board.totals).filter((point) => point === 1)).toHaveLength(3);
+  });
+
+  it('khôi phục ván đã kết thúc thì không cộng điểm lần nữa', async () => {
+    await store.startNew({
+      villageName: 'Ác Quỷ',
+      playerNames: NAMES,
+      config: {
+        ...DEFAULT_GAME_CONFIG,
+        spyCount: 1,
+        hasWhite: false,
+        minRoundsBeforeVote: 1,
+      },
+    });
+    for (let i = 0; i < NAMES.length; i++) {
+      await store.revealNext();
+    }
+    for (let i = 0; i < NAMES.length; i++) {
+      await store.nextSpeaker();
+    }
+    const state = store.state()!;
+    const spyId = state.aliveIds.find((id) => state.assignments[id].role === 'SPY')!;
+    await store.vote({ [spyId]: 3 });
+    await store.afterReveal();
+
+    const before = await TestBed.inject(ScoreboardRepository).load();
+
+    // Người chơi tắt app ở màn kết ván rồi mở lại.
+    store.clearInMemory();
+    await store.resume();
+
+    const after = await TestBed.inject(ScoreboardRepository).load();
+    expect(after.totals).toEqual(before.totals);
+    expect(after.history).toHaveLength(1);
   });
 });

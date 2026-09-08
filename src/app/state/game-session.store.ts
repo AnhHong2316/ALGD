@@ -11,6 +11,7 @@ import {
 } from '../core/engine/game-engine';
 import { VoteTally } from '../core/engine/vote-resolver';
 import { Rng } from '../core/engine/rng';
+import { awardPoints } from '../core/engine/scoring';
 import {
   CardContent,
   GameConfig,
@@ -19,6 +20,8 @@ import {
   Player,
 } from '../core/models';
 import { ActiveGameRepository } from '../data/repositories/active-game.repository';
+import { ScoreboardRepository } from '../data/repositories/scoreboard.repository';
+import { SettingsRepository } from '../data/repositories/settings.repository';
 import { WordBankRepository } from '../data/repositories/word-bank.repository';
 import { startNewGame } from '../data/start-new-game';
 
@@ -39,6 +42,8 @@ export interface StartNewInput {
 export class GameSessionStore {
   private readonly wordBank = inject(WordBankRepository);
   private readonly activeGame = inject(ActiveGameRepository);
+  private readonly scoreboard = inject(ScoreboardRepository);
+  private readonly settings = inject(SettingsRepository);
 
   private readonly _state = signal<GameState | null>(null);
   private readonly _events = signal<NarrationEvent[]>([]);
@@ -168,6 +173,10 @@ export class GameSessionStore {
     const saved = await this.activeGame.load();
     this._state.set(saved);
     this._events.set([]);
+
+    // App có thể đã bị đóng ngay lúc ván vừa kết thúc, trước khi kịp ghi điểm.
+    // Gọi lại ở đây là an toàn vì phép ghi bất biến theo gameId.
+    if (saved !== null) await this.recordIfEnded(saved);
   }
 
   async abandon(): Promise<void> {
@@ -192,5 +201,23 @@ export class GameSessionStore {
     this._state.set(state);
     this._events.set(events);
     await this.activeGame.save(state);
+    await this.recordIfEnded(state);
+  }
+
+  /**
+   * Ghi kết quả ván vào bảng điểm. Gọi được nhiều lần cho cùng một ván: kho
+   * bảng điểm bỏ qua ván đã ghi dựa theo `gameId`.
+   */
+  private async recordIfEnded(state: GameState): Promise<void> {
+    if (state.phase !== 'ENDED' || state.outcome === null) return;
+
+    const settings = await this.settings.load();
+    await this.scoreboard.recordGame({
+      gameId: state.id,
+      villageName: state.villageName,
+      playedAt: new Date().toISOString(),
+      outcome: state.outcome,
+      points: awardPoints(state, settings.scoreRules),
+    });
   }
 }

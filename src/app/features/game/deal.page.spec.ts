@@ -3,6 +3,8 @@ import { provideRouter } from '@angular/router';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_GAME_CONFIG } from '../../core/models';
 import { ActiveGameRepository } from '../../data/repositories/active-game.repository';
+import { ScoreboardRepository } from '../../data/repositories/scoreboard.repository';
+import { SettingsRepository } from '../../data/repositories/settings.repository';
 import { WordBankRepository } from '../../data/repositories/word-bank.repository';
 import { MemoryStorage } from '../../data/storage/memory-storage';
 import { STORAGE_PORT } from '../../data/storage/storage.token';
@@ -20,6 +22,8 @@ async function setup() {
       { provide: STORAGE_PORT, useValue: new MemoryStorage() },
       WordBankRepository,
       ActiveGameRepository,
+      ScoreboardRepository,
+      SettingsRepository,
       GameSessionStore,
     ],
   });
