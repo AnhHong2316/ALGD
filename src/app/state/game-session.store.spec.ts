@@ -155,4 +155,85 @@ describe('GameSessionStore', () => {
     expect(typeof card?.word === 'string' || card?.word === null).toBe(true);
     expect(store.currentDealName()).toBe('Minh');
   });
+
+  /** Chia bài cho hết người để ván bước vào pha nói. */
+  async function dealAll(): Promise<void> {
+    await store.startNew({
+      villageName: 'Ác Quỷ',
+      playerNames: NAMES,
+      config: { ...DEFAULT_GAME_CONFIG, spyCount: 1, minRoundsBeforeVote: 1 },
+    });
+    for (let i = 0; i < NAMES.length; i++) {
+      await store.revealNext();
+    }
+  }
+
+  it('chia xong thì có người nói đầu tiên', async () => {
+    await dealAll();
+
+    expect(store.state()?.phase).toBe('SPEAKING');
+    expect(store.currentSpeakerName()).not.toBeNull();
+    expect(NAMES).toContain(store.currentSpeakerName());
+  });
+
+  it('xong lượt thì sang người kế', async () => {
+    await dealAll();
+    const first = store.currentSpeakerName();
+
+    await store.nextSpeaker();
+
+    expect(store.currentSpeakerName()).not.toBe(first);
+  });
+
+  it('hết người nói và đủ số vòng thì mở pha vote', async () => {
+    await dealAll();
+    for (let i = 0; i < NAMES.length; i++) {
+      await store.nextSpeaker();
+    }
+
+    expect(store.state()?.phase).toBe('VOTING');
+  });
+
+  it('vote tập trung vào một người thì người đó bị loại', async () => {
+    await dealAll();
+    for (let i = 0; i < NAMES.length; i++) {
+      await store.nextSpeaker();
+    }
+    const target = store.state()!.aliveIds[0];
+
+    await store.vote({ [target]: 3 });
+
+    expect(store.state()?.aliveIds).not.toContain(target);
+    expect(store.lastEliminatedName()).toBe(
+      store.state()!.players.find((p) => p.id === target)!.name,
+    );
+  });
+
+  it('còn bao nhiêu vòng nữa mới được vote', async () => {
+    await store.startNew({
+      villageName: 'Ác Quỷ',
+      playerNames: NAMES,
+      config: { ...DEFAULT_GAME_CONFIG, spyCount: 1, minRoundsBeforeVote: 3 },
+    });
+    for (let i = 0; i < NAMES.length; i++) {
+      await store.revealNext();
+    }
+
+    // Đang ở vòng 1, cần tới hết vòng 3 mới mở vote.
+    expect(store.roundsLeftBeforeVote()).toBe(2);
+  });
+
+  it('người còn sống là tập con của toàn bộ người chơi', async () => {
+    await dealAll();
+
+    expect(store.alivePlayers()).toHaveLength(NAMES.length);
+    expect(store.alivePlayers().map((p) => p.name).sort()).toEqual([...NAMES].sort());
+  });
+
+  it('chưa có ván thì các dẫn xuất trong ván đều rỗng', () => {
+    expect(store.currentSpeakerName()).toBeNull();
+    expect(store.lastEliminatedName()).toBeNull();
+    expect(store.alivePlayers()).toEqual([]);
+    expect(store.roundsLeftBeforeVote()).toBe(0);
+  });
 });
