@@ -12,7 +12,12 @@ import { WordBankRepository } from '../data/repositories/word-bank.repository';
 import { MemoryStorage } from '../data/storage/memory-storage';
 import { STORAGE_PORT } from '../data/storage/storage.token';
 import { GameSessionStore } from './game-session.store';
-import { NARRATION_HOLD_MS, NARRATION_RNG, NarrationStore } from './narration.store';
+import {
+  DOUBLE_KNOCK_GAP_MS,
+  NARRATION_HOLD_MS,
+  NARRATION_RNG,
+  NarrationStore,
+} from './narration.store';
 
 /**
  * Bốc lần lượt biến thể 0, 1, 2 rồi quay lại — không dùng Math.random thật.
@@ -77,6 +82,7 @@ function setup(speech = new SilentSpeech()) {
       // Không chờ thật trong test. Nhịp giữ chữ chỉ có ý nghĩa với người xem.
       { provide: NARRATION_HOLD_MS, useValue: 0 },
       { provide: NARRATION_RNG, useValue: sequentialRng() },
+      { provide: DOUBLE_KNOCK_GAP_MS, useValue: 0 },
       WordBankRepository,
       ActiveGameRepository,
       ScoreboardRepository,
@@ -297,5 +303,29 @@ describe('NarrationStore', () => {
     await settle();
 
     expect(sfx.played).toEqual([]);
+  });
+
+  it('mở vote thì gõ hai tiếng', async () => {
+    const { sfx, store } = setup();
+    await store.init();
+
+    store.raise({ type: 'VOTE_OPEN', payload: {} });
+    await settle();
+    await settle();
+
+    expect(sfx.played).toEqual(['knock', 'knock']);
+  });
+
+  it('tắt tiếng giữa hai tiếng gõ thì tiếng sau không kêu nữa', async () => {
+    const { sfx, store } = setup();
+    await store.init();
+
+    store.raise({ type: 'VOTE_OPEN', payload: {} });
+    await settle();
+    await store.setSoundLevel('OFF');
+    await settle();
+    await settle();
+
+    expect(sfx.played).toEqual(['knock']);
   });
 });

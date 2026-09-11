@@ -58,7 +58,10 @@ const SFX_BY_EVENT: Partial<Record<NarrationEventType, SfxCue>> = {
   WHITE_GUESS_CORRECT: { name: 'chime', times: 1 },
 };
 
-const DOUBLE_KNOCK_GAP_MS = 140;
+/** Khoảng cách giữa hai tiếng gõ đôi. Test cắm 0 để khỏi chờ thật. */
+export const DOUBLE_KNOCK_GAP_MS = new InjectionToken<number>('DOUBLE_KNOCK_GAP_MS', {
+  factory: () => 140,
+});
 
 const NEXT_LEVEL: Record<SoundLevel, SoundLevel> = {
   FULL: 'SFX_ONLY',
@@ -79,6 +82,7 @@ export class NarrationStore {
   private readonly speech = inject(SPEECH_PORT);
   private readonly sfx = inject(SFX_PORT);
   private readonly holdMs = inject(NARRATION_HOLD_MS);
+  private readonly knockGapMs = inject(DOUBLE_KNOCK_GAP_MS);
 
   private readonly _line = signal('');
   private readonly _soundLevel = signal<SoundLevel>('FULL');
@@ -216,7 +220,14 @@ export class NarrationStore {
 
     this.sfx.play(cue.name);
     if (cue.times === 2) {
-      setTimeout(() => this.sfx.play(cue.name), DOUBLE_KNOCK_GAP_MS);
+      setTimeout(() => {
+        // Kiểm lại mức lúc tiếng thứ hai thật sự phát. Người chơi bấm tắt
+        // tiếng ngay trong quãng nghỉ giữa hai tiếng gõ là chuyện có thật, và
+        // lời hứa "tắt là im ngay" phải đúng cho cả tiếng động chứ không chỉ
+        // riêng giọng đọc.
+        if (this.level === 'OFF') return;
+        this.sfx.play(cue.name);
+      }, this.knockGapMs);
     }
   }
 }
