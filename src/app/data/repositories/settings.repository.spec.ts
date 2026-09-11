@@ -31,6 +31,7 @@ describe('SettingsRepository', () => {
       timerSeconds: null,
       minRoundsBeforeVote: 2,
       lastRevealSpyToSpy: true,
+      voiceNoticeDismissed: false,
     });
 
     const settings = await repository.load();
@@ -60,5 +61,44 @@ describe('SettingsRepository', () => {
     );
 
     expect((await repository.load()).soundLevel).toBe('FULL');
+  });
+
+  it('mặc định là chưa tắt lời nhắc thiếu giọng', async () => {
+    expect((await repository.load()).voiceNoticeDismissed).toBe(false);
+  });
+
+  it('nhớ được là người dùng đã bảo đừng nhắc nữa', async () => {
+    const settings = await repository.load();
+    await repository.save({ ...settings, voiceNoticeDismissed: true });
+
+    expect((await repository.load()).voiceNoticeDismissed).toBe(true);
+  });
+
+  it('dữ liệu lưu từ bản cũ, chưa có trường mới, vẫn đọc nguyên vẹn', async () => {
+    // Đây là bản ghi thật của bản trước: đủ mọi trường CŨ, không có
+    // voiceNoticeDismissed. Nếu kiểm hình dạng đòi trường mới thì luật tính
+    // điểm người dùng tự sửa dưới đây sẽ bị xoá sạch trong im lặng.
+    await storage.set(
+      'settings',
+      JSON.stringify({
+        scoreRules: { civilianWin: 7, spyWin: 9, whiteWin: 11 },
+        soundLevel: 'SFX_ONLY',
+        speechRate: 1.3,
+        timerSeconds: 45,
+        minRoundsBeforeVote: 2,
+        lastRevealSpyToSpy: true,
+      }),
+    );
+
+    const settings = await repository.load();
+
+    expect(settings.scoreRules).toEqual({ civilianWin: 7, spyWin: 9, whiteWin: 11 });
+    expect(settings.soundLevel).toBe('SFX_ONLY');
+    expect(settings.speechRate).toBe(1.3);
+    expect(settings.timerSeconds).toBe(45);
+    expect(settings.minRoundsBeforeVote).toBe(2);
+    expect(settings.lastRevealSpyToSpy).toBe(true);
+    // Trường mới vắng mặt thì lấy mặc định, không được làm hỏng bản ghi.
+    expect(settings.voiceNoticeDismissed).toBe(false);
   });
 });
