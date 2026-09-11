@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { SFX_PORT } from '../audio/sfx.token';
 import { SilentSfx } from '../audio/silent-sfx';
 import { SilentSpeech } from '../audio/silent-speech';
+import { SpeechPort } from '../audio/speech-port';
 import { SPEECH_PORT } from '../audio/speech.token';
 import { ActiveGameRepository } from '../data/repositories/active-game.repository';
 import { ScoreboardRepository } from '../data/repositories/scoreboard.repository';
@@ -30,8 +31,42 @@ function sequentialRng(period = 3): () => number {
   };
 }
 
-function setup() {
-  const speech = new SilentSpeech();
+/**
+ * Bản đọc giữ lại lời hứa cho tới khi test chủ động thả.
+ *
+ * SilentSpeech resolve tức thì nên một đợt không bao giờ còn đang dở khi đợt
+ * sau tới — mà đó chính là tình huống duy nhất phép cắt đợt có ý nghĩa.
+ */
+class PausableSpeech implements SpeechPort {
+  readonly spoken: { text: string; rate: number }[] = [];
+  stopCount = 0;
+  vietnameseVoice = true;
+
+  private pending: (() => void)[] = [];
+
+  speak(text: string, rate: number): Promise<void> {
+    this.spoken.push({ text, rate });
+    return new Promise((resolve) => this.pending.push(resolve));
+  }
+
+  /** Thả hết câu đang treo, như thể máy vừa đọc xong. */
+  finishAll(): void {
+    const waiting = this.pending;
+    this.pending = [];
+    for (const resolve of waiting) resolve();
+  }
+
+  stop(): Promise<void> {
+    this.stopCount += 1;
+    return Promise.resolve();
+  }
+
+  hasVietnameseVoice(): Promise<boolean> {
+    return Promise.resolve(this.vietnameseVoice);
+  }
+}
+
+function setup(speech = new SilentSpeech()) {
   const sfx = new SilentSfx();
 
   TestBed.configureTestingModule({
@@ -124,6 +159,33 @@ describe('NarrationStore', () => {
     await settle();
 
     expect(speech.stopCount).toBeGreaterThanOrEqual(1);
+  });
+
+  it('đợt mới tới thì đợt cũ bỏ dở, không đọc nốt câu còn lại', async () => {
+    const speech = new PausableSpeech();
+    const { store } = setup(speech);
+    await store.init();
+
+    // Đợt cũ hai câu: câu đầu đang đọc dở, câu sau còn xếp hàng.
+    store.raiseAll([
+      { type: 'SPY_CAUGHT', payload: { player: 'Minh' } },
+      { type: 'CIVILIANS_WIN', payload: { village: 'Ác Quỷ' } },
+    ]);
+    await settle();
+    expect(speech.spoken.length).toBe(1);
+
+    // Đợt mới tới giữa chừng.
+    store.raise({ type: 'VOTE_OPEN', payload: { village: 'Ác Quỷ' } });
+    await settle();
+
+    speech.finishAll();
+    await settle();
+    speech.finishAll();
+    await settle();
+
+    // Chỉ được đọc câu đầu của đợt cũ và câu của đợt mới. Câu thứ hai của
+    // đợt cũ phải bị bỏ, vì lúc nó tới lượt thì ván đã sang pha khác.
+    expect(speech.spoken.length).toBe(2);
   });
 
   it('đọc theo tốc độ đã cài', async () => {
