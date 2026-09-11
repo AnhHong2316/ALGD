@@ -51,6 +51,10 @@ function isScoreRules(value: unknown): value is ScoreRules {
  * được điền mặc định trong withDefaults. Bắt buộc nó nghĩa là mọi bản ghi
  * người dùng lưu từ phiên bản trước đều trượt kiểm và bị thay bằng mặc định
  * trong im lặng — mất luôn cả luật tính điểm họ tự sửa.
+ *
+ * withDefaults chỉ trải MỘT tầng, nên quy tắc này áp dụng cho cả object lồng
+ * bên trong: thêm trường bắt buộc vào ScoreRules cũng xoá sạch bản ghi cũ y
+ * như thêm vào AppSettings.
  */
 function isAppSettings(value: unknown): value is Partial<AppSettings> {
   if (typeof value !== 'object' || value === null) return false;

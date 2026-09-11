@@ -13,6 +13,14 @@ export interface GameConfig {
   minRoundsBeforeVote: number;
 }
 
+/**
+ * Cảnh báo cho người thêm trường vào đây: bản ghi cài đặt đã lưu trên máy
+ * người dùng được kiểm hình dạng ở data/repositories/settings.repository.ts,
+ * và phép điền mặc định ở đó (withDefaults) chỉ trải MỘT tầng. Thêm một
+ * trường bắt buộc vào ScoreRules sẽ khiến mọi bản ghi cũ trượt kiểm và bị xoá
+ * sạch trong im lặng — mất luôn cả luật tính điểm người dùng tự chỉnh. Trường
+ * mới phải là tuỳ chọn ở isScoreRules và được điền mặc định.
+ */
 export interface ScoreRules {
   civilianWin: number;
   spyWin: number;
