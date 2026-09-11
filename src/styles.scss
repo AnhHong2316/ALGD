@@ -226,3 +226,31 @@ h3 {
   position: relative;
   z-index: 1;
 }
+
+/* --------------------------------------------------------------------------
+   Hộp thông báo nổi
+   -------------------------------------------------------------------------- */
+
+.notice {
+  position: fixed;
+  left: var(--space-4);
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: var(--space-4);
+  background: var(--ink-700);
+  border: 1px solid var(--ink-600);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.notice__text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
