@@ -415,7 +415,11 @@ export class WebAudioSfx implements SfxPort {
       // Trình duyệt khoá âm thanh cho tới khi người dùng chạm màn hình. Ván
       // này luôn có nút bấm trước đó nên resume() gần như luôn thành công,
       // nhưng vẫn phải gọi vì lần đầu context sinh ra ở trạng thái suspended.
-      if (context.state === 'suspended') void context.resume();
+      //
+      // Phải nuốt lời từ chối: resume() trả Promise và có trình duyệt từ chối
+      // thẳng nếu gọi ngoài một cử chỉ chạm — đúng lúc tiếng tick phát ra từ
+      // đồng hồ. Khối try bên ngoài là đồng bộ nên không bắt được nó.
+      if (context.state === 'suspended') void context.resume().catch(() => {});
 
       const now = context.currentTime;
       switch (name) {
