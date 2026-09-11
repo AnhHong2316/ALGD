@@ -18,23 +18,7 @@ import {
   NARRATION_RNG,
   NarrationStore,
 } from './narration.store';
-
-/**
- * Bốc lần lượt biến thể 0, 1, 2 rồi quay lại — không dùng Math.random thật.
- *
- * Kịch bản có câu mang {village}/{player} xen giữa câu không mang (cố ý, để
- * đỡ nghe lặp). Nếu test bốc bằng Math.random thật thì so khớp chữ trong
- * assertion trở thành may rủi. Giống cách line-picker.spec.ts dùng Rng cố
- * định (`first`, `last`) thay vì ngẫu nhiên thật.
- */
-function sequentialRng(period = 3): () => number {
-  let i = 0;
-  return () => {
-    const value = (i % period) / period;
-    i += 1;
-    return value;
-  };
-}
+import { sequentialRng } from './testing/sequential-rng';
 
 /**
  * Bản đọc giữ lại lời hứa cho tới khi test chủ động thả.

@@ -13,17 +13,8 @@ import { MemoryStorage } from '../../data/storage/memory-storage';
 import { STORAGE_PORT } from '../../data/storage/storage.token';
 import { GameSessionStore } from '../../state/game-session.store';
 import { NARRATION_HOLD_MS, NARRATION_RNG, NarrationStore } from '../../state/narration.store';
+import { sequentialRng } from '../../state/testing/sequential-rng';
 import { SettingsPage } from './settings.page';
-
-/** Rng cố định để câu thoại không đổi giữa các lần chạy test (xem narration.store.spec.ts). */
-function sequentialRng(period = 3): () => number {
-  let i = 0;
-  return () => {
-    const value = (i % period) / period;
-    i += 1;
-    return value;
-  };
-}
 
 function setup() {
   const speech = new SilentSpeech();
@@ -116,5 +107,21 @@ describe('SettingsPage', () => {
     await fixture.whenStable();
 
     expect(speech.spoken.length).toBe(1);
+  });
+
+  it('không ở mức đọc đầy đủ thì nút nghe thử bị khoá', async () => {
+    const { fixture } = setup();
+    const store = TestBed.inject(NarrationStore);
+    await store.init();
+    await store.setSoundLevel('SFX_ONLY');
+    fixture.detectChanges();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-test="preview"]',
+    ) as HTMLButtonElement;
+
+    // preview() tự thoát sớm khi mức khác FULL. Không khoá nút thì người chơi
+    // thấy một nút bấm được mà im lặng, tưởng hỏng.
+    expect(button.disabled).toBe(true);
   });
 });

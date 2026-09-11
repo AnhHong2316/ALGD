@@ -13,23 +13,9 @@ import { MemoryStorage } from '../data/storage/memory-storage';
 import { STORAGE_PORT } from '../data/storage/storage.token';
 import { GameSessionStore } from '../state/game-session.store';
 import { NARRATION_HOLD_MS, NARRATION_RNG, NarrationStore } from '../state/narration.store';
+import { sequentialRng } from '../state/testing/sequential-rng';
 import { AppBar } from './app-bar';
 import { NarrationStrip } from './narration-strip';
-
-/**
- * Bốc lần lượt biến thể 0, 1, 2 rồi quay lại — không dùng Math.random thật.
- *
- * Giống narration.store.spec.ts: kịch bản có câu KHÔNG mang {village}, bốc
- * ngẫu nhiên thật sẽ khiến so khớp chữ trong assertion thành may rủi.
- */
-function sequentialRng(period = 3): () => number {
-  let i = 0;
-  return () => {
-    const value = (i % period) / period;
-    i += 1;
-    return value;
-  };
-}
 
 function providers() {
   return [
