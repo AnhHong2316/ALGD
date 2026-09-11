@@ -48,7 +48,7 @@ function fill(line: string, payload: NarrationPayload): string {
       // thành mẫu, mà tên người chơi là chữ người dùng tự gõ; và thay nối tiếp
       // thì giá trị chèn ở lượt trước bị lượt sau quét lại, nên ai đặt tên làng
       // là "{player}" sẽ bị nuốt mất tên.
-      .replace(/\{village\}|\{player\}|\{round\}/g, (match) => values[match] ?? '')
+      .replace(/\{village\}|\{player\}|\{round\}/g, (match) => values[match])
       // Bỏ chỗ giữ chỗ đi thường để lại khoảng trắng đôi. Gom lại, nếu không
       // giọng đọc sẽ ngắt một nhịp thừa ngay giữa câu.
       .replace(/\s+/g, ' ')
