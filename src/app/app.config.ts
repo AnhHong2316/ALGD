@@ -10,6 +10,11 @@ import { PreferencesStorage } from './data/storage/preferences-storage';
 import { STORAGE_PORT } from './data/storage/storage.token';
 import { GameSessionStore } from './state/game-session.store';
 import { NewGameDraftStore } from './state/new-game-draft.store';
+import { CapacitorSpeech } from './audio/capacitor-speech';
+import { SPEECH_PORT } from './audio/speech.token';
+import { SFX_PORT } from './audio/sfx.token';
+import { WebAudioSfx } from './audio/web-audio-sfx';
+import { NarrationStore } from './state/narration.store';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -20,6 +25,11 @@ export const appConfig: ApplicationConfig = {
     // Trên máy thật dùng Capacitor Preferences; test tự cắm MemoryStorage.
     { provide: STORAGE_PORT, useClass: PreferencesStorage },
 
+    // Trên máy thật đọc bằng TTS hệ thống và tổng hợp tiếng bằng Web Audio;
+    // test tự cắm SilentSpeech và SilentSfx.
+    { provide: SPEECH_PORT, useClass: CapacitorSpeech },
+    { provide: SFX_PORT, useClass: WebAudioSfx },
+
     PlayersRepository,
     SettingsRepository,
     WordBankRepository,
@@ -28,5 +38,6 @@ export const appConfig: ApplicationConfig = {
 
     NewGameDraftStore,
     GameSessionStore,
+    NarrationStore,
   ],
 };
