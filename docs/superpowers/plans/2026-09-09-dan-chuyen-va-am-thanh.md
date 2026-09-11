@@ -2275,10 +2275,9 @@ import { NarrationStore } from './state/narration.store';
   template: `
     <app-bar />
     <app-narration-strip />
-    <router-outlet />
 
     @if (narration.showVoiceNotice()) {
-      <div class="notice" role="alert">
+      <div class="notice" role="region" aria-label="Thông báo về giọng đọc">
         <p class="notice__text">
           Máy này chưa có giọng đọc tiếng Việt nên phần dẫn chuyện sẽ chỉ hiện
           bằng chữ. Ván vẫn chơi bình thường.
@@ -2288,6 +2287,8 @@ import { NarrationStore } from './state/narration.store';
         </button>
       </div>
     }
+
+    <router-outlet />
   `,
   styleUrl: './app.scss',
 })
@@ -2312,15 +2313,17 @@ Thêm vào cuối `src/styles.scss`:
 
 ```scss
 /* --------------------------------------------------------------------------
-   Hộp thông báo nổi
+   Dải thông báo dưới thanh dẫn chuyện
+
+   Nằm trong luồng bình thường, KHÔNG position: fixed. Mọi màn chơi đều đặt
+   nút chính ở đáy màn hình (.screen__actions là con cuối của một flex dọc có
+   spacer flex:1 đẩy xuống), nên một hộp cố định ở đáy sẽ đè lên đúng nút đó —
+   và nó chỉ hiện với người dùng máy thiếu giọng tiếng Việt, tức là đúng nhóm
+   đã chịu thiệt sẵn. Thứ gì cố định thì đều đè được lên thứ khác; nằm trong
+   luồng thì không, theo cấu trúc chứ không theo may mắn.
    -------------------------------------------------------------------------- */
 
 .notice {
-  position: fixed;
-  left: var(--space-4);
-  right: var(--space-4);
-  bottom: var(--space-4);
-  z-index: 10;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -2328,9 +2331,7 @@ Thêm vào cuối `src/styles.scss`:
   margin: 0 auto;
   padding: var(--space-4);
   background: var(--ink-700);
-  border: 1px solid var(--ink-600);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid var(--ink-600);
 }
 
 .notice__text {
@@ -2932,6 +2933,22 @@ Bấm nút loa giữa lúc đang đọc dở một câu dài.
 - [ ] **Step 5: Soát màn Cài đặt**
 
 Vào `/cai-dat`. Kéo tốc độ đọc lên 1.5, bấm "Nghe thử" — phải nghe rõ là đọc nhanh hơn. Kéo xuống 0.5, nghe thử lại — phải chậm hơn hẳn.
+
+- [ ] **Step 5b: Soát chỗ đứng của hộp thông báo**
+
+Hộp thông báo thiếu giọng nằm trong luồng, ngay dưới dải chữ dẫn. Mở nó ra
+(xem Step 6) rồi soát trên màn hình hẹp nhất bro có:
+
+| Điểm | Phải đúng |
+|---|---|
+| Trang chủ | Hộp **không che** nút "Ván mới" |
+| Màn chia bài | Hộp không che nút "Tôi là {tên}" |
+| Màn vòng nói | Hộp không che nút "Xong lượt" |
+| Sau khi bấm "Không nhắc lại" | Bố cục trở lại y như cũ, không còn khoảng trống thừa |
+
+Đây là lỗi jsdom không bao giờ bắt được vì nó không tính bố cục, và cũng không
+lộ trên cửa sổ desktop rộng. Thu hẹp cửa sổ trình duyệt xuống cỡ điện thoại
+trước khi soát.
 
 - [ ] **Step 6: Soát đường suy giảm khi thiếu giọng**
 
