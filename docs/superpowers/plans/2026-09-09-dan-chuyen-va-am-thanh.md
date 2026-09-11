@@ -1863,16 +1863,42 @@ import { SpeechPort } from './speech-port';
  * hasVietnameseVoice là thứ NarrationStore hỏi lúc khởi động.
  */
 export class CapacitorSpeech implements SpeechPort {
+  /**
+   * Hàm thả lời hứa của câu đang đọc, nếu có.
+   *
+   * Cần nó vì bản Android của plugin: stop() chạy `tts.stop(); requests.clear();`
+   * — xoá bảng callback mà không gọi onDone hay onError cho câu vừa bị cắt.
+   * Mà call.resolve() chỉ nằm trong callback đó, nên lời hứa của speak() treo
+   * mãi mãi. Bản web không bị: cancel() ở đó kích onerror nên lời hứa bị từ
+   * chối và try/catch bắt được.
+   *
+   * Lưu ý thêm: speak() bên Java tự gọi stop() khi queueStrategy là
+   * QUEUE_FLUSH (mặc định), nên hai lời đọc liên tiếp cũng dính.
+   */
+  private settleCurrent: (() => void) | null = null;
+
   async speak(text: string, rate: number): Promise<void> {
+    // NarrationStore.run() đã lọc chuỗi rỗng rồi, nhưng adapter không nên tin
+    // mù quáng vào người gọi trong tương lai.
     if (text.trim() === '') return;
 
     try {
       // Promise này resolve khi đọc XONG. Hàng đợi trong NarrationStore dựa
       // hẳn vào điều đó để đọc tuần tự.
-      await TextToSpeech.speak({ text, lang: 'vi-VN', rate });
+      //
+      // Cố ý KHÔNG dùng hết-giờ: đoán một khoảng thời gian sẽ cắt ngang câu
+      // dài rồi để câu sau đè lên. Thả đúng lúc stop() được gọi là chính xác.
+      await Promise.race([
+        TextToSpeech.speak({ text, lang: 'vi-VN', rate }),
+        new Promise<void>((resolve) => {
+          this.settleCurrent = resolve;
+        }),
+      ]);
     } catch {
       // Máy không đọc được thì thôi. Chữ vẫn đang hiện trên màn hình nên ván
       // không mất thông tin gì.
+    } finally {
+      this.settleCurrent = null;
     }
   }
 
@@ -1882,12 +1908,17 @@ export class CapacitorSpeech implements SpeechPort {
     } catch {
       // Không có gì đang đọc thì stop ném lỗi trên vài máy. Bỏ qua.
     }
+
+    // Thả câu đang treo, xem chú thích ở settleCurrent.
+    this.settleCurrent?.();
+    this.settleCurrent = null;
   }
 
   async hasVietnameseVoice(): Promise<boolean> {
     try {
       const { voices } = await TextToSpeech.getSupportedVoices();
-      return voices.some((voice) => (voice.lang ?? '').toLowerCase().startsWith('vi'));
+      // lang là string bắt buộc trong kiểu thật của plugin, không cần ?? ''.
+      return voices.some((voice) => voice.lang.toLowerCase().startsWith('vi'));
     } catch {
       // Không hỏi được thì đoán là có, để không tự tắt tiếng oan trên máy mà
       // plugin chỉ thiếu hàm liệt kê giọng.
@@ -1975,6 +2006,10 @@ function providers() {
     { provide: SPEECH_PORT, useValue: new SilentSpeech() },
     { provide: SFX_PORT, useValue: new SilentSfx() },
     { provide: NARRATION_HOLD_MS, useValue: 0 },
+    // BẮT BUỘC. Kịch bản có biến thể VOTE_OPEN không nhắc tên làng, nên bài
+    // kiểm "hiện câu dẫn" mà bốc bằng ngẫu nhiên thật sẽ đỏ khoảng một lần
+    // trong ba. Chép sequentialRng() từ narration.store.spec.ts sang.
+    { provide: NARRATION_RNG, useValue: sequentialRng() },
     WordBankRepository,
     ActiveGameRepository,
     ScoreboardRepository,
