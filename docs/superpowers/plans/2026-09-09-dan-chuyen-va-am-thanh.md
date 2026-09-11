@@ -34,7 +34,9 @@ Chạy `npm test` là toàn bộ test hiện tại phải xanh trước khi bro 
 - Test component dùng `TestBed.configureTestingModule` với một hàm `setup()` ở đầu file, và `beforeEach(() => TestBed.resetTestingModule())`.
 - Service đánh dấu `@Injectable()` trơn, rồi liệt kê trong `app.config.ts`. **Không** dùng `providedIn: 'root'`.
 - Comment tiếng Việt, giải thích *tại sao*, không giải thích *cái gì*.
-- Chạy test: `npm test`. Chạy một file: `npx vitest run src/app/audio/silent-speech.spec.ts`
+- Chạy test: `npm test`. Chạy một file: `npm test -- --include=src/app/audio/silent-speech.spec.ts`
+
+> **Đừng bao giờ gọi thẳng `npx vitest run`.** `npm test` chạy `ng test`, tức là build Angular trước rồi mới chạy Vitest. Gọi thẳng `npx vitest` bỏ qua bước build, và mọi test dùng `TestBed` sẽ đổ sập hàng loạt — lần thử đầu ra 123 đỏ trên 364. Đó là lỗi giả. Test của Task 1 và Task 3 là hàm thuần nên chạy kiểu nào cũng xanh, càng dễ làm bro tưởng lệnh kia dùng được. Từ Task 6 trở đi toàn test component, sai lệnh là mất hàng giờ đi sửa mã vốn đang đúng.
 
 ### Ba chỗ dễ làm sai
 
@@ -151,7 +153,7 @@ describe('SilentSfx', () => {
 
 - [ ] **Step 2: Chạy test để xác nhận đỏ**
 
-Run: `npx vitest run src/app/audio/silent-speech.spec.ts`
+Run: `npm test -- --include=src/app/audio/silent-speech.spec.ts`
 Expected: FAIL — không tìm thấy module `./silent-sfx` và `./silent-speech`.
 
 - [ ] **Step 3: Viết hai cổng**
@@ -268,7 +270,7 @@ export class SilentSfx implements SfxPort {
 
 - [ ] **Step 5: Chạy test để xác nhận xanh**
 
-Run: `npx vitest run src/app/audio/silent-speech.spec.ts`
+Run: `npm test -- --include=src/app/audio/silent-speech.spec.ts`
 Expected: PASS, 5 test.
 
 - [ ] **Step 6: Commit**
@@ -383,7 +385,7 @@ describe('WebAudioSfx', () => {
 
 - [ ] **Step 2: Chạy test để xác nhận đỏ**
 
-Run: `npx vitest run src/app/audio/web-audio-sfx.spec.ts`
+Run: `npm test -- --include=src/app/audio/web-audio-sfx.spec.ts`
 Expected: FAIL — không tìm thấy module `./web-audio-sfx`.
 
 - [ ] **Step 3: Cài đặt**
@@ -523,7 +525,7 @@ export class WebAudioSfx implements SfxPort {
 
 - [ ] **Step 4: Chạy test để xác nhận xanh**
 
-Run: `npx vitest run src/app/audio/web-audio-sfx.spec.ts`
+Run: `npm test -- --include=src/app/audio/web-audio-sfx.spec.ts`
 Expected: PASS, 3 test.
 
 - [ ] **Step 5: Commit**
@@ -660,7 +662,7 @@ describe('pickLine', () => {
 
 - [ ] **Step 2: Chạy test để xác nhận đỏ**
 
-Run: `npx vitest run src/app/core/narration/line-picker.spec.ts`
+Run: `npm test -- --include=src/app/core/narration/line-picker.spec.ts`
 Expected: FAIL — không tìm thấy module `./line-picker`.
 
 - [ ] **Step 3: Cài đặt**
@@ -718,7 +720,7 @@ function fill(line: string, payload: NarrationPayload): string {
 
 - [ ] **Step 4: Chạy test để xác nhận xanh**
 
-Run: `npx vitest run src/app/core/narration/line-picker.spec.ts`
+Run: `npm test -- --include=src/app/core/narration/line-picker.spec.ts`
 Expected: PASS, 7 test.
 
 - [ ] **Step 5: Commit**
@@ -821,7 +823,7 @@ describe('kịch bản thoại tiếng Việt', () => {
 
 - [ ] **Step 2: Chạy test để xác nhận đỏ**
 
-Run: `npx vitest run src/app/data/narration/narration.spec.ts`
+Run: `npm test -- --include=src/app/data/narration/narration.spec.ts`
 Expected: FAIL — không tìm thấy module `./narration.vi`.
 
 - [ ] **Step 3: Viết kịch bản**
@@ -948,7 +950,7 @@ export const NARRATION_VI: NarrationScript = {
 
 - [ ] **Step 4: Chạy test để xác nhận xanh**
 
-Run: `npx vitest run src/app/data/narration/narration.spec.ts`
+Run: `npm test -- --include=src/app/data/narration/narration.spec.ts`
 Expected: PASS, 5 test.
 
 - [ ] **Step 5: Commit**
@@ -1015,7 +1017,7 @@ Thêm vào cuối `describe('SettingsRepository', ...)` trong `src/app/data/repo
 
 - [ ] **Step 2: Chạy test để xác nhận đỏ**
 
-Run: `npx vitest run src/app/data/repositories/settings.repository.spec.ts`
+Run: `npm test -- --include=src/app/data/repositories/settings.repository.spec.ts`
 Expected: FAIL — `voiceNoticeDismissed` là `undefined`, không phải `false`.
 
 - [ ] **Step 3: Cài đặt**
@@ -1363,7 +1365,7 @@ describe('NarrationStore', () => {
 
 - [ ] **Step 2: Chạy test để xác nhận đỏ**
 
-Run: `npx vitest run src/app/state/narration.store.spec.ts`
+Run: `npm test -- --include=src/app/state/narration.store.spec.ts`
 Expected: FAIL — không tìm thấy module `./narration.store`.
 
 - [ ] **Step 3: Cài đặt**
@@ -1587,7 +1589,7 @@ function delay(ms: number): Promise<void> {
 
 - [ ] **Step 4: Chạy test để xác nhận xanh**
 
-Run: `npx vitest run src/app/state/narration.store.spec.ts`
+Run: `npm test -- --include=src/app/state/narration.store.spec.ts`
 Expected: PASS, 15 test.
 
 Nếu test "đợt mới cắt đợt cũ" chập chờn, nguyên nhân gần như chắc chắn là `SilentSpeech.speak` resolve ngay nên đợt đầu chạy xong trước khi đợt hai kịp tới. Đó vẫn là hành vi đúng vì `run` gọi `stop()` ở đầu mỗi đợt, nên `stopCount` vẫn tăng. Đừng sửa mã cài đặt để chiều test.
@@ -1852,7 +1854,7 @@ describe('NarrationStrip', () => {
 
 - [ ] **Step 2: Chạy test để xác nhận đỏ**
 
-Run: `npx vitest run src/app/shell/app-bar.spec.ts`
+Run: `npm test -- --include=src/app/shell/app-bar.spec.ts`
 Expected: FAIL — không tìm thấy module `./app-bar`.
 
 - [ ] **Step 3: Viết thanh trên cùng**
@@ -2315,7 +2317,7 @@ describe('SettingsPage', () => {
 
 - [ ] **Step 2: Chạy test để xác nhận đỏ**
 
-Run: `npx vitest run src/app/features/settings/settings.page.spec.ts`
+Run: `npm test -- --include=src/app/features/settings/settings.page.spec.ts`
 Expected: FAIL — không tìm thấy module `./settings.page`.
 
 - [ ] **Step 3: Viết màn Cài đặt**
@@ -2466,7 +2468,7 @@ Trong `src/app/app.routes.ts`, thêm ngay trước dòng `{ path: '**', redirect
 
 - [ ] **Step 5: Chạy test để xác nhận xanh**
 
-Run: `npx vitest run src/app/features/settings/settings.page.spec.ts`
+Run: `npm test -- --include=src/app/features/settings/settings.page.spec.ts`
 Expected: PASS, 5 test.
 
 - [ ] **Step 6: Commit**
@@ -2553,7 +2555,7 @@ File này đã có sẵn `vi` trong dòng import từ `vitest` và `afterEach(()
 
 - [ ] **Step 2: Chạy test để xác nhận đỏ**
 
-Run: `npx vitest run src/app/features/game/speaking.page.spec.ts`
+Run: `npm test -- --include=src/app/features/game/speaking.page.spec.ts`
 Expected: FAIL — `narration.line()` vẫn là chuỗi rỗng vì đồng hồ chưa bắn gì.
 
 - [ ] **Step 3: Cài đặt**
@@ -2616,7 +2618,7 @@ Thay `restartClock` (dòng 137-152) bằng:
 
 - [ ] **Step 4: Chạy test để xác nhận xanh**
 
-Run: `npx vitest run src/app/features/game/speaking.page.spec.ts`
+Run: `npm test -- --include=src/app/features/game/speaking.page.spec.ts`
 Expected: PASS toàn bộ test của file.
 
 - [ ] **Step 5: Chạy toàn bộ test**
