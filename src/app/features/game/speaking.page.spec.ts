@@ -150,24 +150,25 @@ describe('SpeakingPage', () => {
     ).toBeNull();
   });
 
-  it('còn 5 giây thì nhắc sắp hết giờ, và chỉ nhắc đúng một lần', async () => {
+  it('năm giây cuối gõ tick từng giây nhưng chỉ nhắc đúng một lần', async () => {
     vi.useFakeTimers();
     const { fixture } = await setup({ timerSeconds: 30 });
     const narration = TestBed.inject(NarrationStore);
     await narration.init();
 
-    // Chạy tới lúc còn đúng 5 giây. Dùng bản Async vì hàng đợi dẫn chuyện là
-    // chuỗi promise; advanceTimersByTime bản thường không nhả microtask nên
-    // lời dẫn chưa kịp được đặt.
-    await vi.advanceTimersByTimeAsync(25_000);
-    const warned = narration.line();
+    const tick = vi.spyOn(narration, 'tick');
+    const raise = vi.spyOn(narration, 'raise');
 
-    // Thêm một giây nữa: chỉ được gõ tick, không được nhắc lần hai.
-    await vi.advanceTimersByTimeAsync(1_000);
+    // 30 → 1: đi qua trọn năm giây cuối.
+    await vi.advanceTimersByTimeAsync(29_000);
 
-    expect(warned).not.toBe('');
-    expect(narration.line()).toBe(warned);
-    expect(fixture.componentInstance.secondsLeft()).toBe(4);
+    expect(fixture.componentInstance.secondsLeft()).toBe(1);
+    // Giây 5, 4, 3, 2, 1 — mỗi giây một tiếng gõ.
+    expect(tick).toHaveBeenCalledTimes(5);
+    // Nhưng lời nhắc chỉ đọc một lần, nếu không nó ghi đè lời dẫn của pha
+    // đang diễn ra năm lần liên tiếp và tự nói chồng lên chính mình.
+    expect(raise).toHaveBeenCalledTimes(1);
+    expect(raise.mock.calls[0][0].type).toBe('TIME_ALMOST_UP');
   });
 
   it('sang người kế thì được nhắc lại từ đầu', async () => {
@@ -176,13 +177,17 @@ describe('SpeakingPage', () => {
     const narration = TestBed.inject(NarrationStore);
     await narration.init();
 
-    await vi.advanceTimersByTimeAsync(25_000);
-    await fixture.componentInstance.done();
+    const raise = vi.spyOn(narration, 'raise');
 
-    // Đồng hồ chạy lại từ 30, nên cờ đã nhắc phải được đặt lại.
+    await vi.advanceTimersByTimeAsync(25_000);
+    expect(raise).toHaveBeenCalledTimes(1);
+
+    await fixture.componentInstance.done();
     await vi.advanceTimersByTimeAsync(25_000);
 
     expect(fixture.componentInstance.secondsLeft()).toBe(5);
-    expect(narration.line()).not.toBe('');
+    // Cờ đã nhắc phải được đặt lại, nếu không người nói kế tiếp không được
+    // nhắc gì cả.
+    expect(raise).toHaveBeenCalledTimes(2);
   });
 });
