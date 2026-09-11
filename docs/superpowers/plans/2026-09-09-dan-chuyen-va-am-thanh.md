@@ -1241,10 +1241,54 @@ import { WordBankRepository } from '../data/repositories/word-bank.repository';
 import { MemoryStorage } from '../data/storage/memory-storage';
 import { STORAGE_PORT } from '../data/storage/storage.token';
 import { GameSessionStore } from './game-session.store';
-import { NARRATION_HOLD_MS, NarrationStore } from './narration.store';
+import { NARRATION_HOLD_MS, NARRATION_RNG, NarrationStore } from './narration.store';
 
-function setup() {
-  const speech = new SilentSpeech();
+/** Bốc lần lượt biến thể 0, 1, 2 rồi quay lại — không dùng Math.random thật. */
+function sequentialRng(): Rng {
+  let i = 0;
+  return () => {
+    const value = (i % 3) / 3;
+    i += 1;
+    return value;
+  };
+}
+
+/**
+ * Bản đọc giữ lại lời hứa cho tới khi test chủ động thả.
+ *
+ * SilentSpeech resolve tức thì nên một đợt không bao giờ còn đang dở khi đợt
+ * sau tới — mà đó chính là tình huống duy nhất phép cắt đợt có ý nghĩa.
+ */
+class PausableSpeech implements SpeechPort {
+  readonly spoken: { text: string; rate: number }[] = [];
+  stopCount = 0;
+  vietnameseVoice = true;
+
+  private pending: (() => void)[] = [];
+
+  speak(text: string, rate: number): Promise<void> {
+    this.spoken.push({ text, rate });
+    return new Promise((resolve) => this.pending.push(resolve));
+  }
+
+  /** Thả hết câu đang treo, như thể máy vừa đọc xong. */
+  finishAll(): void {
+    const waiting = this.pending;
+    this.pending = [];
+    for (const resolve of waiting) resolve();
+  }
+
+  stop(): Promise<void> {
+    this.stopCount += 1;
+    return Promise.resolve();
+  }
+
+  hasVietnameseVoice(): Promise<boolean> {
+    return Promise.resolve(this.vietnameseVoice);
+  }
+}
+
+function setup(speech = new SilentSpeech()) {
   const sfx = new SilentSfx();
 
   TestBed.configureTestingModule({
@@ -1254,6 +1298,8 @@ function setup() {
       { provide: SFX_PORT, useValue: sfx },
       // Không chờ thật trong test. Nhịp giữ chữ chỉ có ý nghĩa với người xem.
       { provide: NARRATION_HOLD_MS, useValue: 0 },
+      // Bốc biến thể tuần tự, không tung xúc xắc.
+      { provide: NARRATION_RNG, useValue: sequentialRng() },
       WordBankRepository,
       ActiveGameRepository,
       ScoreboardRepository,
@@ -1336,6 +1382,33 @@ describe('NarrationStore', () => {
     await settle();
 
     expect(speech.stopCount).toBeGreaterThanOrEqual(1);
+  });
+
+  it('đợt mới tới thì đợt cũ bỏ dở, không đọc nốt câu còn lại', async () => {
+    const speech = new PausableSpeech();
+    const { store } = setup(speech);
+    await store.init();
+
+    // Đợt cũ hai câu: câu đầu đang đọc dở, câu sau còn xếp hàng.
+    store.raiseAll([
+      { type: 'SPY_CAUGHT', payload: { player: 'Minh' } },
+      { type: 'CIVILIANS_WIN', payload: { village: 'Ác Quỷ' } },
+    ]);
+    await settle();
+    expect(speech.spoken.length).toBe(1);
+
+    // Đợt mới tới giữa chừng.
+    store.raise({ type: 'VOTE_OPEN', payload: { village: 'Ác Quỷ' } });
+    await settle();
+
+    speech.finishAll();
+    await settle();
+    speech.finishAll();
+    await settle();
+
+    // Chỉ được đọc câu đầu của đợt cũ và câu của đợt mới. Câu thứ hai của
+    // đợt cũ phải bị bỏ, vì lúc nó tới lượt thì ván đã sang pha khác.
+    expect(speech.spoken.length).toBe(2);
   });
 
   it('đọc theo tốc độ đã cài', async () => {
@@ -1477,6 +1550,18 @@ export const NARRATION_HOLD_MS = new InjectionToken<number>('NARRATION_HOLD_MS',
   factory: () => 2200,
 });
 
+/**
+ * Nguồn ngẫu nhiên để bốc biến thể câu thoại.
+ *
+ * Phải tiêm được, không được gọi thẳng Math.random. Kịch bản cố ý có câu
+ * mang {village}/{player} xen giữa câu không mang, nên test nào so khớp chữ
+ * mà bốc bằng ngẫu nhiên thật sẽ đỏ tuỳ vận may — đo được là đúng một test
+ * đỏ mỗi lần chạy. Cùng lý do khiến line-picker.spec.ts dùng Rng cố định.
+ */
+export const NARRATION_RNG = new InjectionToken<Rng>('NARRATION_RNG', {
+  factory: () => Math.random,
+});
+
 interface SfxCue {
   name: SfxName;
   times: 1 | 2;
@@ -1551,7 +1636,7 @@ export class NarrationStore {
   /** Tăng mỗi đợt. Đợt cũ thấy token đổi thì tự bỏ cuộc. */
   private runToken = 0;
 
-  private readonly rng: Rng = () => Math.random();
+  private readonly rng: Rng = inject(NARRATION_RNG);
 
   constructor() {
     effect(() => {
@@ -1678,7 +1763,7 @@ function delay(ms: number): Promise<void> {
 - [ ] **Step 4: Chạy test để xác nhận xanh**
 
 Run: `npm test -- --include=src/app/state/narration.store.spec.ts`
-Expected: PASS, 15 test.
+Expected: PASS, 16 test.
 
 Nếu test "đợt mới cắt đợt cũ" chập chờn, nguyên nhân gần như chắc chắn là `SilentSpeech.speak` resolve ngay nên đợt đầu chạy xong trước khi đợt hai kịp tới. Đó vẫn là hành vi đúng vì `run` gọi `stop()` ở đầu mỗi đợt, nên `stopCount` vẫn tăng. Đừng sửa mã cài đặt để chiều test.
 
