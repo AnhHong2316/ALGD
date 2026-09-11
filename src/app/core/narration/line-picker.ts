@@ -21,6 +21,10 @@ export function pickLine(
   script: NarrationScript,
   rng: Rng,
 ): string {
+  // script là Record đầy đủ nên script[event.type] không bao giờ undefined
+  // qua một lệnh gọi đã được kiểm kiểu. Giữ ?? [] lại làm lớp bảo hiểm cho
+  // fixture nào dựng bằng ép kiểu `as` mà lỡ thiếu một khoá — nếu không, nó
+  // đọc như code phòng thủ thừa và sẽ bị ai đó xoá đi.
   const variants = script[event.type] ?? [];
   if (variants.length === 0) return '';
 
@@ -29,15 +33,22 @@ export function pickLine(
 
 function fill(line: string, payload: NarrationPayload): string {
   const village = payload.village?.trim();
-  const player = payload.player?.trim() ?? '';
-  const round = payload.round === undefined ? '' : String(payload.round);
+
+  const values: Record<string, string> = {
+    // Làng chưa đặt tên thì gọi là "làng ta", nghe tự nhiên hơn là bỏ trống.
+    '{village}': village === undefined || village === '' ? 'ta' : village,
+    '{player}': payload.player?.trim() ?? '',
+    '{round}': payload.round === undefined ? '' : String(payload.round),
+  };
 
   return (
     line
-      // Làng chưa đặt tên thì gọi là "làng ta", nghe tự nhiên hơn là bỏ trống.
-      .replace(/\{village\}/g, village === undefined || village === '' ? 'ta' : village)
-      .replace(/\{player\}/g, player)
-      .replace(/\{round\}/g, round)
+      // Thay MỘT lượt bằng hàm, không phải ba lượt nối tiếp bằng chuỗi. Hai lý
+      // do, đều là lỗi thật: chuỗi thay thế mà chứa $& hay $$ sẽ bị diễn giải
+      // thành mẫu, mà tên người chơi là chữ người dùng tự gõ; và thay nối tiếp
+      // thì giá trị chèn ở lượt trước bị lượt sau quét lại, nên ai đặt tên làng
+      // là "{player}" sẽ bị nuốt mất tên.
+      .replace(/\{village\}|\{player\}|\{round\}/g, (match) => values[match] ?? '')
       // Bỏ chỗ giữ chỗ đi thường để lại khoảng trắng đôi. Gom lại, nếu không
       // giọng đọc sẽ ngắt một nhịp thừa ngay giữa câu.
       .replace(/\s+/g, ' ')

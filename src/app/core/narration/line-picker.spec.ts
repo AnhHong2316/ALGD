@@ -106,4 +106,49 @@ describe('pickLine', () => {
 
     expect(pickLine({ type: 'ROUND_START', payload: {} }, script, first)).toBe('');
   });
+
+  it('tên có ký tự $ không bị diễn giải thành mẫu thay thế', () => {
+    const script = scriptWith({ SPEAKER_TURN: ['Tới lượt {player}'] });
+
+    expect(
+      pickLine({ type: 'SPEAKER_TURN', payload: { player: 'Minh$&Anh' } }, script, first),
+    ).toBe('Tới lượt Minh$&Anh');
+  });
+
+  it('giá trị vừa thay vào không bị lượt thay sau đó quét lại', () => {
+    const script = scriptWith({ VOTE_OPEN: ['Làng {village} chào {player}'] });
+
+    const line = pickLine(
+      { type: 'VOTE_OPEN', payload: { village: '{player}', player: 'Minh' } },
+      script,
+      first,
+    );
+
+    expect(line).toBe('Làng {player} chào Minh');
+  });
+
+  it('một chỗ giữ chỗ xuất hiện hai lần thì thay cả hai', () => {
+    const script = scriptWith({ SPEAKER_TURN: ['{player} ơi, {player} nói đi'] });
+
+    expect(
+      pickLine({ type: 'SPEAKER_TURN', payload: { player: 'Lan' } }, script, first),
+    ).toBe('Lan ơi, Lan nói đi');
+  });
+
+  it('tên làng thừa khoảng trắng thì cắt gọn chứ không mất', () => {
+    const script = scriptWith({ VOTE_OPEN: ['Làng {village} ơi'] });
+
+    expect(
+      pickLine({ type: 'VOTE_OPEN', payload: { village: '  Đà Nẵng  ' } }, script, first),
+    ).toBe('Làng Đà Nẵng ơi');
+  });
+
+  it('vòng số 0 vẫn hiện là 0, khác hẳn với vắng mặt', () => {
+    const script = scriptWith({ ROUND_START: ['Vòng {round}'] });
+
+    expect(pickLine({ type: 'ROUND_START', payload: { round: 0 } }, script, first)).toBe(
+      'Vòng 0',
+    );
+    expect(pickLine({ type: 'ROUND_START', payload: {} }, script, first)).toBe('Vòng');
+  });
 });
