@@ -124,4 +124,28 @@ describe('SettingsPage', () => {
     // thấy một nút bấm được mà im lặng, tưởng hỏng.
     expect(button.disabled).toBe(true);
   });
+
+  it('kéo thanh trượt chỉ ghi xuống máy lúc thả tay', async () => {
+    const { fixture } = setup();
+    const store = TestBed.inject(NarrationStore);
+    await store.init();
+    await fixture.whenStable();
+
+    const slider = (fixture.nativeElement as HTMLElement).querySelector(
+      'input[type="range"]',
+    ) as HTMLInputElement;
+
+    slider.value = '1.2';
+    slider.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    // Đang kéo thì chưa ghi: mỗi bước một lượt đọc-rồi-ghi qua cầu nối native
+    // vừa phí vừa có thể kết thúc lệch thứ tự.
+    expect((await TestBed.inject(SettingsRepository).load()).speechRate).toBe(1);
+
+    slider.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+
+    expect((await TestBed.inject(SettingsRepository).load()).speechRate).toBe(1.2);
+  });
 });

@@ -8,6 +8,10 @@ const LEVELS: { value: SoundLevel; title: string; note: string }[] = [
   { value: 'OFF', title: 'Tắt tiếng', note: 'Im lặng hoàn toàn. Lời dẫn vẫn hiện bằng chữ.' },
 ];
 
+function readRate(event: Event): number {
+  return Number((event.target as HTMLInputElement).value);
+}
+
 @Component({
   selector: 'app-settings-page',
   template: `
@@ -43,7 +47,8 @@ const LEVELS: { value: SoundLevel; title: string; note: string }[] = [
           max="1.5"
           step="0.1"
           [value]="rateText()"
-          (input)="changeRate($event)"
+          (input)="showRate($event)"
+          (change)="commitRate($event)"
         />
       </div>
 
@@ -111,8 +116,21 @@ export class SettingsPage implements OnInit {
     void this.narration.setSoundLevel(level);
   }
 
-  protected changeRate(event: Event): void {
-    const value = Number((event.target as HTMLInputElement).value);
+  /** Chỉ đổi con số đang hiện, chưa ghi xuống máy. */
+  protected showRate(event: Event): void {
+    this.rate.set(readRate(event));
+  }
+
+  /**
+   * Ghi xuống máy đúng một lần, lúc người dùng thả tay.
+   *
+   * Trước đây ghi theo từng bước của sự kiện input. setSpeechRate là đọc-rồi-
+   * ghi, nên hai lời gọi sát nhau có thể kết thúc lệch thứ tự và lượt ghi của
+   * giá trị cũ đáp sau lượt của giá trị mới — tốc độ lưu trên máy lệch hẳn
+   * khỏi con số đang hiện, mà không có dấu hiệu gì.
+   */
+  protected commitRate(event: Event): void {
+    const value = readRate(event);
     this.rate.set(value);
     void this.narration.setSpeechRate(value);
   }
