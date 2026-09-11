@@ -2751,36 +2751,58 @@ import { SPEECH_PORT } from '../../audio/speech.token';
 import { NARRATION_HOLD_MS, NarrationStore } from '../../state/narration.store';
 ```
 
-**Hai,** thêm bốn dòng vào mảng `providers` trong hàm `setup()` sẵn có (dòng 19-26), ngay dưới dòng `{ provide: STORAGE_PORT, useValue: new MemoryStorage() },`:
+**Hai,** thêm năm dòng vào mảng `providers` trong hàm `setup()` sẵn có, ngay dưới dòng `{ provide: STORAGE_PORT, useValue: new MemoryStorage() },`:
 
 ```ts
       { provide: SPEECH_PORT, useValue: new SilentSpeech() },
       { provide: SFX_PORT, useValue: new SilentSfx() },
       { provide: NARRATION_HOLD_MS, useValue: 0 },
+      { provide: NARRATION_RNG, useValue: sequentialRng() },
       NarrationStore,
 ```
 
-**Ba,** thêm hai test này vào cuối `describe('SpeakingPage', ...)`:
+`sequentialRng` lấy từ `src/app/state/testing/sequential-rng.ts`.
+
+> **Còn một file nữa sẽ vỡ.** Tiêm `NarrationStore` vào `SpeakingPage` làm mọi
+> spec dựng component đó đổ với `NG0201: No provider found`. Ngoài file này còn
+> `src/app/features/game/game.page.spec.ts`, vì nó dựng `SpeakingPage` qua
+> `GamePage`. Thêm đúng năm dòng nhà cung cấp trên vào đó nữa — chỉ thêm nhà
+> cung cấp, không đụng khẳng định nào.
+
+**Ba,** thêm hai test này vào cuối `describe('SpeakingPage', ...)`.
+
+> **Phải soi `tick` và `raise`, không được soi `narration.line()`.** Bản đầu của
+> kế hoạch này khẳng định `line()` khác rỗng rồi không đổi — và **xanh ngay cả
+> khi chưa viết mã**. Lý do: `NarrationStore` có `effect()` chạy ngay lúc được
+> tiêm, bắt lấy sự kiện `SPEAKER_TURN` mà `setup()` đã tạo, nên `line()` đã
+> khác rỗng trước khi đồng hồ tích nhịp nào. Hai bài kiểm mang tên "nhắc sắp
+> hết giờ" mà không hề chạm tới việc nhắc sắp hết giờ.
+>
+> Soi `raise` là chỗ nối an toàn: `effect()` gọi thẳng `raiseAll`, không đi qua
+> `raise`, nên sự kiện của engine không thổi phồng bộ đếm.
 
 ```ts
-  it('còn 5 giây thì nhắc sắp hết giờ, và chỉ nhắc đúng một lần', async () => {
+  it('năm giây cuối gõ tick từng giây nhưng chỉ nhắc đúng một lần', async () => {
     vi.useFakeTimers();
     const { fixture } = await setup({ timerSeconds: 30 });
     const narration = TestBed.inject(NarrationStore);
     await narration.init();
 
-    // Chạy tới lúc còn đúng 5 giây. Dùng bản Async vì hàng đợi dẫn chuyện là
-    // chuỗi promise; advanceTimersByTime bản thường không nhả microtask nên
-    // lời dẫn chưa kịp được đặt.
-    await vi.advanceTimersByTimeAsync(25_000);
-    const warned = narration.line();
+    const tick = vi.spyOn(narration, 'tick');
+    const raise = vi.spyOn(narration, 'raise');
 
-    // Thêm một giây nữa: chỉ được gõ tick, không được nhắc lần hai.
-    await vi.advanceTimersByTimeAsync(1_000);
+    // 30 → 1: đi qua trọn năm giây cuối. Dùng bản Async vì hàng đợi dẫn
+    // chuyện là chuỗi promise; advanceTimersByTime bản thường không nhả
+    // microtask.
+    await vi.advanceTimersByTimeAsync(29_000);
 
-    expect(warned).not.toBe('');
-    expect(narration.line()).toBe(warned);
-    expect(fixture.componentInstance.secondsLeft()).toBe(4);
+    expect(fixture.componentInstance.secondsLeft()).toBe(1);
+    // Giây 5, 4, 3, 2, 1 — mỗi giây một tiếng gõ.
+    expect(tick).toHaveBeenCalledTimes(5);
+    // Nhưng lời nhắc chỉ đọc một lần, nếu không nó ghi đè lời dẫn của pha
+    // đang diễn ra năm lần liên tiếp và tự nói chồng lên chính mình.
+    expect(raise).toHaveBeenCalledTimes(1);
+    expect(raise.mock.calls[0][0].type).toBe('TIME_ALMOST_UP');
   });
 
   it('sang người kế thì được nhắc lại từ đầu', async () => {
@@ -2789,14 +2811,18 @@ import { NARRATION_HOLD_MS, NarrationStore } from '../../state/narration.store';
     const narration = TestBed.inject(NarrationStore);
     await narration.init();
 
-    await vi.advanceTimersByTimeAsync(25_000);
-    await fixture.componentInstance.done();
+    const raise = vi.spyOn(narration, 'raise');
 
-    // Đồng hồ chạy lại từ 30, nên cờ đã nhắc phải được đặt lại.
+    await vi.advanceTimersByTimeAsync(25_000);
+    expect(raise).toHaveBeenCalledTimes(1);
+
+    await fixture.componentInstance.done();
     await vi.advanceTimersByTimeAsync(25_000);
 
     expect(fixture.componentInstance.secondsLeft()).toBe(5);
-    expect(narration.line()).not.toBe('');
+    // Cờ đã nhắc phải được đặt lại, nếu không người nói kế tiếp không được
+    // nhắc gì cả.
+    expect(raise).toHaveBeenCalledTimes(2);
   });
 ```
 
