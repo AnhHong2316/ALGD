@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SFX_PORT } from './audio/sfx.token';
 import { SilentSfx } from './audio/silent-sfx';
 import { SilentSpeech } from './audio/silent-speech';
@@ -15,8 +15,8 @@ import { GameSessionStore } from './state/game-session.store';
 import { NARRATION_HOLD_MS, NarrationStore } from './state/narration.store';
 import { App } from './app';
 
-async function setup(speech = new SilentSpeech()) {
-  await TestBed.configureTestingModule({
+function configure(speech = new SilentSpeech()) {
+  return TestBed.configureTestingModule({
     imports: [App],
     providers: [
       provideRouter([]),
@@ -32,7 +32,10 @@ async function setup(speech = new SilentSpeech()) {
       NarrationStore,
     ],
   }).compileComponents();
+}
 
+async function setup(speech = new SilentSpeech()) {
+  await configure(speech);
   return TestBed.createComponent(App);
 }
 
@@ -55,6 +58,20 @@ describe('App', () => {
     expect(element.textContent).toContain('Ai Là Gián Điệp');
   });
 
+  it('vỏ ứng dụng tự gọi init lúc dựng, không đợi ai gọi hộ', async () => {
+    await configure();
+    const store = TestBed.inject(NarrationStore);
+    const spy = vi.spyOn(store, 'init');
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    // Không chỗ nào khác trong app gọi init(). Mất dòng này thì app mở lên
+    // với mức âm lượng mặc định thay vì mức đã lưu, và không bao giờ hỏi máy
+    // có giọng tiếng Việt hay không.
+    expect(spy).toHaveBeenCalled();
+  });
+
   it('máy có giọng tiếng Việt thì không hiện thông báo thiếu giọng', async () => {
     const fixture = await setup();
     // Gọi thẳng init() thay vì dựa vào ngOnInit: ngOnInit chạy ngầm không
@@ -74,5 +91,32 @@ describe('App', () => {
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).querySelector('.notice')).not.toBeNull();
+  });
+
+  it('bấm không nhắc lại thì thông báo biến mất', async () => {
+    const speech = new SilentSpeech();
+    speech.vietnameseVoice = false;
+    const fixture = await setup(speech);
+
+    // KHÔNG gọi thêm store.init() ở đây: ngOnInit đã tự gọi nó một lần (xem
+    // test "tự gọi init" ở trên), và gọi thêm một lần nữa sẽ đua với lần đó —
+    // nếu lần của ngOnInit hoàn tất SAU khi bấm "không nhắc lại", nó ghi đè
+    // showVoiceNotice về true và làm test chập chờn. Đợi vài nhịp để lần gọi
+    // tự động của ngOnInit chạy xong hẳn rồi mới thao tác, như end.page.spec.ts.
+    for (let i = 0; i < 5; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+    fixture.detectChanges();
+
+    const button = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ].find((b) => b.textContent?.includes('Không nhắc lại'))!;
+    button.click();
+    for (let i = 0; i < 5; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('.notice')).toBeNull();
   });
 });

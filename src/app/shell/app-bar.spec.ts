@@ -126,4 +126,21 @@ describe('NarrationStrip', () => {
       (fixture.nativeElement as HTMLElement).querySelector('.strip__line'),
     ).toBeNull();
   });
+
+  it('tắt tiếng hoàn toàn thì chữ vẫn hiện, vì chữ mới là đường chính', async () => {
+    TestBed.configureTestingModule({
+      imports: [NarrationStrip],
+      providers: providers(),
+    });
+    const fixture = TestBed.createComponent(NarrationStrip);
+    const store = TestBed.inject(NarrationStore);
+    await store.init();
+    await store.setSoundLevel('OFF');
+
+    store.raise({ type: 'VOTE_OPEN', payload: { village: 'Ác Quỷ' } });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Ác Quỷ');
+  });
 });
