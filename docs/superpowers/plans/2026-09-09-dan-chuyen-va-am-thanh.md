@@ -20,7 +20,7 @@ Chạy `npm test` là toàn bộ test hiện tại phải xanh trước khi bro 
 
 | Thứ | Ở đâu | Ghi chú |
 |---|---|---|
-| 17 loại `NarrationEventType` | `src/app/core/models/narration-event.ts` | **Không sửa file này** |
+| 17 loại `NarrationEventType` | `src/app/core/models/narration-event.ts` | **Không thêm bớt loại sự kiện.** Task 4 có tái cấu trúc file này một lần: danh sách giờ là mảng `NARRATION_EVENT_TYPES` dạng `as const`, kiểu union suy ra từ nó — đúng nếp `TOPICS` trong `data/word-bank/types.ts`, để test nhập thẳng mảng thay vì chép tay |
 | Engine phát `events` | `src/app/core/engine/game-engine.ts` | **Không sửa file này** |
 | Signal `events` | `src/app/state/game-session.store.ts:65` | Đã phơi ra, chưa ai đọc. **Không sửa** |
 | `soundLevel`, `speechRate` | `src/app/data/repositories/settings.repository.ts` | Lưu được, chưa ai dùng |
@@ -271,7 +271,7 @@ export class SilentSfx implements SfxPort {
 - [ ] **Step 5: Chạy test để xác nhận xanh**
 
 Run: `npm test -- --include=src/app/audio/silent-speech.spec.ts`
-Expected: PASS, 5 test.
+Expected: PASS, 7 test.
 
 - [ ] **Step 6: Commit**
 
@@ -555,7 +555,7 @@ Tạo `src/app/core/narration/line-picker.spec.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
-import { NarrationEventType } from '../models';
+import { NARRATION_EVENT_TYPES } from '../models';
 import { Rng } from '../engine/rng';
 import { NarrationScript, pickLine } from './line-picker';
 
@@ -566,37 +566,19 @@ const first: Rng = () => 0;
 const last: Rng = () => 0.999;
 
 /**
- * Dựng một kịch bản đủ 17 loại sự kiện, rồi ghi đè loại đang cần thử.
+ * Dựng một kịch bản đủ mọi loại sự kiện, rồi ghi đè loại đang cần thử.
  *
- * Phải liệt kê đủ vì NarrationScript là Record đầy đủ, không phải Partial.
+ * Phải đủ vì NarrationScript là Record đầy đủ, không phải Partial. Lấy danh
+ * sách từ NARRATION_EVENT_TYPES chứ không chép tay, để thêm loại sự kiện mới
+ * là fixture tự phủ theo.
  */
 function scriptWith(overrides: Partial<NarrationScript>): NarrationScript {
-  const types: NarrationEventType[] = [
-    'GAME_START',
-    'PASS_DEVICE',
-    'ROUND_START',
-    'SPEAKER_TURN',
-    'TIME_ALMOST_UP',
-    'VOTE_OPEN',
-    'VOTE_TIE',
-    'NO_ELIMINATION',
-    'RANDOM_TIE_BREAK',
-    'CIVILIAN_KILLED',
-    'SPY_CAUGHT',
-    'WHITE_REVEALED',
-    'WHITE_GUESS_CORRECT',
-    'WHITE_GUESS_WRONG',
-    'CIVILIANS_WIN',
-    'SPIES_WIN',
-    'WHITE_WIN',
-  ];
-
   // Dùng reduce với mầm có kiểu chứ không phải Object.fromEntries: hàm đó
   // luôn trả kiểu chỉ mục { [k: string]: T }, không bao giờ trả kiểu khoá cụ
   // thể, nên ép thẳng sang NarrationScript sẽ đỏ TS2352. Mầm rỗng thì không
   // có thuộc tính nào để xung khắc, nên chỉ cần một phép ép hẹp — khỏi phải
   // dùng `as unknown as`, thứ tắt sạch mọi kiểm tra kiểu.
-  const base = types.reduce((acc, type) => {
+  const base = NARRATION_EVENT_TYPES.reduce((acc, type) => {
     acc[type] = ['câu mặc định'];
     return acc;
   }, {} as NarrationScript);
@@ -816,46 +798,26 @@ Tạo `src/app/data/narration/narration.spec.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
-import { NarrationEventType } from '../../core/models';
+import { NARRATION_EVENT_TYPES, NarrationEventType } from '../../core/models';
 import { NARRATION_VI } from './narration.vi';
-
-const ALL_TYPES: NarrationEventType[] = [
-  'GAME_START',
-  'PASS_DEVICE',
-  'ROUND_START',
-  'SPEAKER_TURN',
-  'TIME_ALMOST_UP',
-  'VOTE_OPEN',
-  'VOTE_TIE',
-  'NO_ELIMINATION',
-  'RANDOM_TIE_BREAK',
-  'CIVILIAN_KILLED',
-  'SPY_CAUGHT',
-  'WHITE_REVEALED',
-  'WHITE_GUESS_CORRECT',
-  'WHITE_GUESS_WRONG',
-  'CIVILIANS_WIN',
-  'SPIES_WIN',
-  'WHITE_WIN',
-];
 
 const ALLOWED_PLACEHOLDERS = ['{village}', '{player}', '{round}'];
 
 describe('kịch bản thoại tiếng Việt', () => {
   it('mọi loại sự kiện đều có ít nhất một câu', () => {
-    for (const type of ALL_TYPES) {
+    for (const type of NARRATION_EVENT_TYPES) {
       expect(NARRATION_VI[type].length, `thiếu thoại cho ${type}`).toBeGreaterThan(0);
     }
   });
 
   it('phần lớn sự kiện có từ hai biến thể trở lên để đỡ nghe lặp', () => {
-    const many = ALL_TYPES.filter((type) => NARRATION_VI[type].length >= 2);
+    const many = NARRATION_EVENT_TYPES.filter((type) => NARRATION_VI[type].length >= 2);
 
-    expect(many.length).toBeGreaterThanOrEqual(ALL_TYPES.length - 2);
+    expect(many.length).toBeGreaterThanOrEqual(NARRATION_EVENT_TYPES.length - 2);
   });
 
   it('không câu nào chứa chỗ giữ chỗ ngoài ba cái được phép', () => {
-    for (const type of ALL_TYPES) {
+    for (const type of NARRATION_EVENT_TYPES) {
       for (const line of NARRATION_VI[type]) {
         for (const found of line.match(/\{[^}]*\}/g) ?? []) {
           expect(ALLOWED_PLACEHOLDERS, `${type}: "${line}"`).toContain(found);
@@ -884,14 +846,38 @@ describe('kịch bản thoại tiếng Việt', () => {
   });
 
   it('không câu nào rỗng hay chỉ có khoảng trắng', () => {
-    for (const type of ALL_TYPES) {
+    for (const type of NARRATION_EVENT_TYPES) {
       for (const line of NARRATION_VI[type]) {
         expect(line.trim().length, `${type} có câu rỗng`).toBeGreaterThan(0);
       }
     }
   });
+
+  it('không sự kiện nào có hai biến thể trùng nhau', () => {
+    for (const type of NARRATION_EVENT_TYPES) {
+      const lines = NARRATION_VI[type];
+
+      expect(new Set(lines).size, `${type} có câu lặp`).toBe(lines.length);
+    }
+  });
+
+  it('không câu nào dài tới mức đọc lên thành lê thê', () => {
+    // Không phải chuyện văn phong — chỉ là trần độ dài để câu nào lỡ viết
+    // thành đoạn văn thì lộ ra ngay. Câu dài nhất hiện tại 62 ký tự.
+    for (const type of NARRATION_EVENT_TYPES) {
+      for (const line of NARRATION_VI[type]) {
+        expect(line.length, `${type}: "${line}"`).toBeLessThanOrEqual(100);
+      }
+    }
+  });
 });
 ```
+
+`NARRATION_EVENT_TYPES` phải nhập từ `core/models` chứ không chép tay danh
+sách vào file test. Nếu chép tay thì thêm loại sự kiện thứ 18 sẽ khiến
+`NARRATION_VI` đỏ ở khâu biên dịch (vì `Record` đầy đủ), nhưng bốn bài kiểm
+còn lại **im lặng bỏ qua** loại mới — bộ test vẫn xanh trong khi đã thủng một
+lỗ. Cùng lý do đó, `line-picker.spec.ts` ở Task 3 cũng dùng mảng này.
 
 - [ ] **Step 2: Chạy test để xác nhận đỏ**
 
@@ -1023,7 +1009,7 @@ export const NARRATION_VI: NarrationScript = {
 - [ ] **Step 4: Chạy test để xác nhận xanh**
 
 Run: `npm test -- --include=src/app/data/narration/narration.spec.ts`
-Expected: PASS, 5 test.
+Expected: PASS, 7 test.
 
 - [ ] **Step 5: Commit**
 
@@ -2541,7 +2527,7 @@ Trong `src/app/app.routes.ts`, thêm ngay trước dòng `{ path: '**', redirect
 - [ ] **Step 5: Chạy test để xác nhận xanh**
 
 Run: `npm test -- --include=src/app/features/settings/settings.page.spec.ts`
-Expected: PASS, 5 test.
+Expected: PASS, 7 test.
 
 - [ ] **Step 6: Commit**
 
