@@ -591,9 +591,15 @@ function scriptWith(overrides: Partial<NarrationScript>): NarrationScript {
     'WHITE_WIN',
   ];
 
-  const base = Object.fromEntries(
-    types.map((type) => [type, ['câu mặc định']]),
-  ) as NarrationScript;
+  // Dùng reduce với mầm có kiểu chứ không phải Object.fromEntries: hàm đó
+  // luôn trả kiểu chỉ mục { [k: string]: T }, không bao giờ trả kiểu khoá cụ
+  // thể, nên ép thẳng sang NarrationScript sẽ đỏ TS2352. Mầm rỗng thì không
+  // có thuộc tính nào để xung khắc, nên chỉ cần một phép ép hẹp — khỏi phải
+  // dùng `as unknown as`, thứ tắt sạch mọi kiểm tra kiểu.
+  const base = types.reduce((acc, type) => {
+    acc[type] = ['câu mặc định'];
+    return acc;
+  }, {} as NarrationScript);
 
   return { ...base, ...overrides };
 }
