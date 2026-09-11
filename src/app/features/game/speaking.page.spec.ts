@@ -150,6 +150,27 @@ describe('SpeakingPage', () => {
     ).toBeNull();
   });
 
+  it('ván tắt đồng hồ thì không gõ tiếng cũng không nhắc gì', async () => {
+    vi.useFakeTimers();
+    const { fixture } = await setup({ timerSeconds: null });
+    const narration = TestBed.inject(NarrationStore);
+    await narration.init();
+
+    const tick = vi.spyOn(narration, 'tick');
+    const raise = vi.spyOn(narration, 'raise');
+
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    // Bài kiểm này ghim KẾT QUẢ, không ghim một lớp chắn cụ thể nào: hiện có
+    // hai lớp độc lập cùng chặn (restartClock thoát sớm, và thân interval
+    // dừng ngay khi left === null), nên gỡ một lớp vẫn im. Thứ nó thật sự đỡ
+    // là một kiểu "dọn cho gọn" rất dễ xảy ra: đổi `?? null` thành `?? 30`.
+    // Khi đó ván tắt đồng hồ sẽ chạy đồng hồ và gõ tick, và bài này đỏ ngay.
+    expect(fixture.componentInstance.secondsLeft()).toBeNull();
+    expect(tick).not.toHaveBeenCalled();
+    expect(raise).not.toHaveBeenCalled();
+  });
+
   it('năm giây cuối gõ tick từng giây nhưng chỉ nhắc đúng một lần', async () => {
     vi.useFakeTimers();
     const { fixture } = await setup({ timerSeconds: 30 });
