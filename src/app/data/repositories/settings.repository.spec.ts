@@ -63,6 +63,26 @@ describe('SettingsRepository', () => {
     expect((await repository.load()).soundLevel).toBe('FULL');
   });
 
+  it('trường nhớ lời nhắc sai kiểu thì coi như hỏng', async () => {
+    // Có mặt nhưng sai kiểu là bản ghi hỏng, khác hẳn với vắng mặt. Vắng mặt
+    // là bản ghi của phiên bản cũ và phải được giữ nguyên; sai kiểu thì không
+    // tin được nữa.
+    await storage.set(
+      'settings',
+      JSON.stringify({
+        scoreRules: { civilianWin: 7, spyWin: 9, whiteWin: 11 },
+        soundLevel: 'SFX_ONLY',
+        speechRate: 1.3,
+        timerSeconds: 45,
+        minRoundsBeforeVote: 2,
+        lastRevealSpyToSpy: true,
+        voiceNoticeDismissed: 'co',
+      }),
+    );
+
+    expect((await repository.load()).scoreRules).toEqual(DEFAULT_SCORE_RULES);
+  });
+
   it('mặc định là chưa tắt lời nhắc thiếu giọng', async () => {
     expect((await repository.load()).voiceNoticeDismissed).toBe(false);
   });
