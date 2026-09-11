@@ -10,10 +10,9 @@ import { NarrationStore } from './state/narration.store';
   template: `
     <app-bar />
     <app-narration-strip />
-    <router-outlet />
 
     @if (narration.showVoiceNotice()) {
-      <div class="notice" role="alert">
+      <div class="notice" role="region" aria-label="Thông báo về giọng đọc">
         <p class="notice__text">
           Máy này chưa có giọng đọc tiếng Việt nên phần dẫn chuyện sẽ chỉ hiện
           bằng chữ. Ván vẫn chơi bình thường.
@@ -23,6 +22,8 @@ import { NarrationStore } from './state/narration.store';
         </button>
       </div>
     }
+
+    <router-outlet />
   `,
   styleUrl: './app.scss',
 })
