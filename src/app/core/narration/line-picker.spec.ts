@@ -35,9 +35,10 @@ function scriptWith(overrides: Partial<NarrationScript>): NarrationScript {
     'WHITE_WIN',
   ];
 
-  const base = Object.fromEntries(
-    types.map((type) => [type, ['câu mặc định']]),
-  ) as unknown as NarrationScript;
+  const base = types.reduce((acc, type) => {
+    acc[type] = ['câu mặc định'];
+    return acc;
+  }, {} as NarrationScript);
 
   return { ...base, ...overrides };
 }
