@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NarrationEventType } from '../models';
+import { NARRATION_EVENT_TYPES } from '../models';
 import { Rng } from '../engine/rng';
 import { NarrationScript, pickLine } from './line-picker';
 
@@ -10,32 +10,12 @@ const first: Rng = () => 0;
 const last: Rng = () => 0.999;
 
 /**
- * Dựng một kịch bản đủ 17 loại sự kiện, rồi ghi đè loại đang cần thử.
+ * Dựng một kịch bản đủ mọi loại sự kiện, rồi ghi đè loại đang cần thử.
  *
  * Phải liệt kê đủ vì NarrationScript là Record đầy đủ, không phải Partial.
  */
 function scriptWith(overrides: Partial<NarrationScript>): NarrationScript {
-  const types: NarrationEventType[] = [
-    'GAME_START',
-    'PASS_DEVICE',
-    'ROUND_START',
-    'SPEAKER_TURN',
-    'TIME_ALMOST_UP',
-    'VOTE_OPEN',
-    'VOTE_TIE',
-    'NO_ELIMINATION',
-    'RANDOM_TIE_BREAK',
-    'CIVILIAN_KILLED',
-    'SPY_CAUGHT',
-    'WHITE_REVEALED',
-    'WHITE_GUESS_CORRECT',
-    'WHITE_GUESS_WRONG',
-    'CIVILIANS_WIN',
-    'SPIES_WIN',
-    'WHITE_WIN',
-  ];
-
-  const base = types.reduce((acc, type) => {
+  const base = NARRATION_EVENT_TYPES.reduce((acc, type) => {
     acc[type] = ['câu mặc định'];
     return acc;
   }, {} as NarrationScript);
