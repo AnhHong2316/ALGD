@@ -18,5 +18,10 @@ export const routes: Routes = [
     path: 'van',
     loadComponent: () => import('./features/game/game.page').then((m) => m.GamePage),
   },
+  {
+    path: 'cai-dat',
+    loadComponent: () =>
+      import('./features/settings/settings.page').then((m) => m.SettingsPage),
+  },
   { path: '**', redirectTo: '' },
 ];
