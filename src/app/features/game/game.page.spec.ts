@@ -12,6 +12,12 @@ import { STORAGE_PORT } from '../../data/storage/storage.token';
 import { GameSessionStore } from '../../state/game-session.store';
 import { NewGameDraftStore } from '../../state/new-game-draft.store';
 import { GamePage } from './game.page';
+import { SFX_PORT } from '../../audio/sfx.token';
+import { SilentSfx } from '../../audio/silent-sfx';
+import { SilentSpeech } from '../../audio/silent-speech';
+import { SPEECH_PORT } from '../../audio/speech.token';
+import { NARRATION_HOLD_MS, NARRATION_RNG, NarrationStore } from '../../state/narration.store';
+import { sequentialRng } from '../../state/testing/sequential-rng';
 
 const NAMES = ['Minh', 'Hùng', 'Lan', 'Đức'];
 
@@ -29,6 +35,13 @@ function configure(storage: MemoryStorage) {
     providers: [
       provideRouter([{ path: '', component: StubHomePage }]),
       { provide: STORAGE_PORT, useValue: storage },
+      // Màn vòng nói tự bắn TIME_ALMOST_UP qua NarrationStore, nên cây DI của
+      // cả trang GamePage phải có đủ NarrationStore và các cổng nó cần.
+      { provide: SPEECH_PORT, useValue: new SilentSpeech() },
+      { provide: SFX_PORT, useValue: new SilentSfx() },
+      { provide: NARRATION_HOLD_MS, useValue: 0 },
+      { provide: NARRATION_RNG, useValue: sequentialRng() },
+      NarrationStore,
       WordBankRepository,
       ActiveGameRepository,
       ScoreboardRepository,

@@ -1,11 +1,20 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { GameSessionStore } from '../../state/game-session.store';
+import { NarrationStore } from '../../state/narration.store';
+
+/** Bắt đầu nhắc và gõ tick khi còn ngần này giây. */
+const ALMOST_UP_AT = 5;
 
 /**
  * Vòng nói.
  *
  * Đồng hồ chỉ để nhắc, hết giờ KHÔNG tự chuyển người: ngoài đời người ta hay
  * nói nốt câu dở, và cắt ngang giữa câu khó chịu hơn là chạy quá vài giây.
+ *
+ * Đây là chỗ DUY NHẤT trong hệ thống mà lời dẫn được bắn ra từ bên ngoài
+ * engine: engine là một máy trạng thái thuần, không biết gì về đồng hồ treo
+ * tường, nên TIME_ALMOST_UP không có đường nào khác để phát ra ngoài đồng hồ
+ * của màn hình này. Đừng "sửa cho nhất quán" bằng cách dời nó vào engine.
  */
 @Component({
   selector: 'app-speaking-page',
@@ -110,6 +119,10 @@ import { GameSessionStore } from '../../state/game-session.store';
 export class SpeakingPage {
   private readonly session = inject(GameSessionStore);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly narration = inject(NarrationStore);
+
+  /** Mỗi lượt chỉ nhắc một lần, dù đồng hồ chạy qua mốc 5 giây nhiều nhịp. */
+  private warned = false;
 
   readonly name = computed(() => this.session.currentSpeakerName() ?? '');
   readonly order = computed(() => this.session.speakingNames());
@@ -136,6 +149,7 @@ export class SpeakingPage {
 
   private restartClock(): void {
     this.stopClock();
+    this.warned = false;
 
     const seconds = this.session.state()?.config.timerSeconds ?? null;
     this._secondsLeft.set(seconds);
@@ -147,7 +161,19 @@ export class SpeakingPage {
         this.stopClock();
         return;
       }
-      this._secondsLeft.set(left - 1);
+
+      const next = left - 1;
+      this._secondsLeft.set(next);
+
+      if (next > 0 && next <= ALMOST_UP_AT) {
+        // Tiếng tick gõ từng giây, còn lời nhắc chỉ đọc đúng một lần. Đọc lại
+        // mỗi giây thì vừa ồn vừa ghi đè lời dẫn của pha đang diễn ra.
+        this.narration.tick();
+        if (!this.warned) {
+          this.warned = true;
+          this.narration.raise({ type: 'TIME_ALMOST_UP', payload: {} });
+        }
+      }
     }, 1000);
   }
 

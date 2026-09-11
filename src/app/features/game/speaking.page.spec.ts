@@ -9,6 +9,12 @@ import { MemoryStorage } from '../../data/storage/memory-storage';
 import { STORAGE_PORT } from '../../data/storage/storage.token';
 import { GameSessionStore } from '../../state/game-session.store';
 import { SpeakingPage } from './speaking.page';
+import { SFX_PORT } from '../../audio/sfx.token';
+import { SilentSfx } from '../../audio/silent-sfx';
+import { SilentSpeech } from '../../audio/silent-speech';
+import { SPEECH_PORT } from '../../audio/speech.token';
+import { NARRATION_HOLD_MS, NARRATION_RNG, NarrationStore } from '../../state/narration.store';
+import { sequentialRng } from '../../state/testing/sequential-rng';
 
 const NAMES = ['Minh', 'Hùng', 'Lan', 'Đức'];
 
@@ -18,6 +24,11 @@ async function setup(config: Partial<GameConfig> = {}) {
     imports: [SpeakingPage],
     providers: [
       { provide: STORAGE_PORT, useValue: new MemoryStorage() },
+      { provide: SPEECH_PORT, useValue: new SilentSpeech() },
+      { provide: SFX_PORT, useValue: new SilentSfx() },
+      { provide: NARRATION_HOLD_MS, useValue: 0 },
+      { provide: NARRATION_RNG, useValue: sequentialRng() },
+      NarrationStore,
       WordBankRepository,
       ActiveGameRepository,
       ScoreboardRepository,
@@ -137,5 +148,41 @@ describe('SpeakingPage', () => {
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('.speaking__clock'),
     ).toBeNull();
+  });
+
+  it('còn 5 giây thì nhắc sắp hết giờ, và chỉ nhắc đúng một lần', async () => {
+    vi.useFakeTimers();
+    const { fixture } = await setup({ timerSeconds: 30 });
+    const narration = TestBed.inject(NarrationStore);
+    await narration.init();
+
+    // Chạy tới lúc còn đúng 5 giây. Dùng bản Async vì hàng đợi dẫn chuyện là
+    // chuỗi promise; advanceTimersByTime bản thường không nhả microtask nên
+    // lời dẫn chưa kịp được đặt.
+    await vi.advanceTimersByTimeAsync(25_000);
+    const warned = narration.line();
+
+    // Thêm một giây nữa: chỉ được gõ tick, không được nhắc lần hai.
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(warned).not.toBe('');
+    expect(narration.line()).toBe(warned);
+    expect(fixture.componentInstance.secondsLeft()).toBe(4);
+  });
+
+  it('sang người kế thì được nhắc lại từ đầu', async () => {
+    vi.useFakeTimers();
+    const { fixture } = await setup({ timerSeconds: 30 });
+    const narration = TestBed.inject(NarrationStore);
+    await narration.init();
+
+    await vi.advanceTimersByTimeAsync(25_000);
+    await fixture.componentInstance.done();
+
+    // Đồng hồ chạy lại từ 30, nên cờ đã nhắc phải được đặt lại.
+    await vi.advanceTimersByTimeAsync(25_000);
+
+    expect(fixture.componentInstance.secondsLeft()).toBe(5);
+    expect(narration.line()).not.toBe('');
   });
 });
