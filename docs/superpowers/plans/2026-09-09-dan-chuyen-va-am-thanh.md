@@ -1071,12 +1071,42 @@ Thêm vào cuối `describe('SettingsRepository', ...)` trong `src/app/data/repo
     // Trường mới vắng mặt thì lấy mặc định, không được làm hỏng bản ghi.
     expect(settings.voiceNoticeDismissed).toBe(false);
   });
+
+  it('trường nhớ lời nhắc sai kiểu thì coi như hỏng', async () => {
+    // Có mặt nhưng sai kiểu là bản ghi hỏng, khác hẳn với vắng mặt. Vắng mặt
+    // là bản ghi của phiên bản cũ và phải được giữ nguyên; sai kiểu thì không
+    // tin được nữa.
+    await storage.set(
+      'settings',
+      JSON.stringify({
+        scoreRules: { civilianWin: 7, spyWin: 9, whiteWin: 11 },
+        soundLevel: 'SFX_ONLY',
+        speechRate: 1.3,
+        timerSeconds: 45,
+        minRoundsBeforeVote: 2,
+        lastRevealSpyToSpy: true,
+        voiceNoticeDismissed: 'co',
+      }),
+    );
+
+    expect((await repository.load()).scoreRules).toEqual(DEFAULT_SCORE_RULES);
+  });
 ```
+
+**Một chỗ kế hoạch này thiếu, phải làm thêm:** `voiceNoticeDismissed` là
+trường **bắt buộc** trên `AppSettings` công khai (chỉ vị từ của `isAppSettings`
+mới là `Partial`). Nên mọi object literal dựng tay kiểu `AppSettings` sẵn có
+đều vỡ khâu biên dịch cho tới khi thêm trường vào. Trong file test này có một
+chỗ như vậy, ở bài `'lưu rồi đọc lại đúng giá trị'` — thêm
+`voiceNoticeDismissed: false,` vào literal đó, không đổi tên hay khẳng định
+nào khác.
 
 - [ ] **Step 2: Chạy test để xác nhận đỏ**
 
 Run: `npm test -- --include=src/app/data/repositories/settings.repository.spec.ts`
-Expected: FAIL — `voiceNoticeDismissed` là `undefined`, không phải `false`.
+Expected: FAIL ngay khâu biên dịch — `voiceNoticeDismissed` chưa tồn tại trên
+`AppSettings` nên ra `TS2339`/`TS2353`, chứ không phải đỏ ở khẳng định. Đó vẫn
+là đỏ đúng lý do.
 
 - [ ] **Step 3: Cài đặt**
 
