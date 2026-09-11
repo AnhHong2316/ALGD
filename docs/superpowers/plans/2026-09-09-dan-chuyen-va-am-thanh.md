@@ -20,7 +20,7 @@ Chạy `npm test` là toàn bộ test hiện tại phải xanh trước khi bro 
 
 | Thứ | Ở đâu | Ghi chú |
 |---|---|---|
-| 18 loại `NarrationEventType` | `src/app/core/models/narration-event.ts` | **Không sửa file này** |
+| 17 loại `NarrationEventType` | `src/app/core/models/narration-event.ts` | **Không sửa file này** |
 | Engine phát `events` | `src/app/core/engine/game-engine.ts` | **Không sửa file này** |
 | Signal `events` | `src/app/state/game-session.store.ts:65` | Đã phơi ra, chưa ai đọc. **Không sửa** |
 | `soundLevel`, `speechRate` | `src/app/data/repositories/settings.repository.ts` | Lưu được, chưa ai dùng |
@@ -67,7 +67,7 @@ Task 1 → 2, 3, 4, 5 chạy song song được → Task 6 cần xong 1, 3, 4, 5
 | `src/app/audio/web-audio-sfx.ts` | Tổng hợp bốn tiếng bằng Web Audio |
 | `src/app/audio/capacitor-speech.ts` | Bản đọc thật |
 | `src/app/core/narration/line-picker.ts` | Hàm thuần: sự kiện + kịch bản + rng → câu chữ |
-| `src/app/data/narration/narration.vi.ts` | Kịch bản thoại, 18 loại sự kiện |
+| `src/app/data/narration/narration.vi.ts` | Kịch bản thoại, 17 loại sự kiện |
 | `src/app/state/narration.store.ts` | Nối `events` sang chữ và lệnh phát tiếng |
 | `src/app/shell/app-bar.ts` | Thanh trên cùng: nút quay lại, nút loa, nút cài đặt |
 | `src/app/shell/narration-strip.ts` | Dải chữ dẫn, nằm ngay dưới thanh |
@@ -777,7 +777,11 @@ function fill(line: string, payload: NarrationPayload): string {
       // sẽ bị diễn giải thành mẫu, mà tên người chơi là chữ người dùng tự gõ;
       // và thay nối tiếp thì giá trị chèn ở lượt trước bị lượt sau quét lại,
       // nên ai đặt tên làng là "{player}" sẽ bị nuốt mất tên.
-      .replace(/\{village\}|\{player\}|\{round\}/g, (match) => values[match] ?? '')
+      // Không có nhánh dự phòng ?? '' ở đây: biểu thức chỉ khớp đúng ba khoá
+      // có sẵn trong values, nên nhánh đó không bao giờ chạy. Tệ hơn, nếu sau
+      // này ai đổi tên một chỗ giữ chỗ mà quên sửa values, nó sẽ nuốt gọn lỗi
+      // đánh máy thành chuỗi rỗng. Hỏng mà thấy được hơn hỏng mà im lặng.
+      .replace(/\{village\}|\{player\}|\{round\}/g, (match) => values[match])
       // Bỏ chỗ giữ chỗ đi thường để lại khoảng trắng đôi. Gom lại, nếu không
       // giọng đọc sẽ ngắt một nhịp thừa ngay giữa câu.
       .replace(/\s+/g, ' ')

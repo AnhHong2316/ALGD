@@ -16,7 +16,7 @@ Thứ đang có sẵn, và sẽ dùng lại nguyên vẹn:
 
 | Thứ | Ở đâu | Trạng thái |
 |---|---|---|
-| 18 loại `NarrationEventType` | `core/models/narration-event.ts` | Đủ dùng, không sửa |
+| 17 loại `NarrationEventType` | `core/models/narration-event.ts` | Đủ dùng, không sửa |
 | Engine phát `events` sau mỗi hành động | `core/engine/game-engine.ts` | Không sửa |
 | Signal `events` trên kho phiên | `state/game-session.store.ts:65` | Đã phơi ra, chưa ai đọc |
 | `soundLevel`, `speechRate` | `data/repositories/settings.repository.ts` | Lưu được, chưa ai dùng |
@@ -161,7 +161,7 @@ export const NARRATION_VI: NarrationScript = {
     'Tèo teo, một người dân vô tội đã đi bán muối',
     '{player} ra đi trong oan ức, làng {village} mất một người tốt',
   ],
-  // ... đủ 18 loại
+  // ... đủ 17 loại
 };
 ```
 
