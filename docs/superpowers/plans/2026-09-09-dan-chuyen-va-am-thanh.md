@@ -667,8 +667,55 @@ describe('pickLine', () => {
 
     expect(pickLine({ type: 'ROUND_START', payload: {} }, script, first)).toBe('');
   });
+
+  it('tên có ký tự $ không bị diễn giải thành mẫu thay thế', () => {
+    const script = scriptWith({ SPEAKER_TURN: ['Tới lượt {player}'] });
+
+    expect(
+      pickLine({ type: 'SPEAKER_TURN', payload: { player: 'Minh$&Anh' } }, script, first),
+    ).toBe('Tới lượt Minh$&Anh');
+  });
+
+  it('giá trị vừa thay vào không bị lượt thay sau đó quét lại', () => {
+    const script = scriptWith({ VOTE_OPEN: ['Làng {village} chào {player}'] });
+
+    const line = pickLine(
+      { type: 'VOTE_OPEN', payload: { village: '{player}', player: 'Minh' } },
+      script,
+      first,
+    );
+
+    expect(line).toBe('Làng {player} chào Minh');
+  });
+
+  it('một chỗ giữ chỗ xuất hiện hai lần thì thay cả hai', () => {
+    const script = scriptWith({ SPEAKER_TURN: ['{player} ơi, {player} nói đi'] });
+
+    expect(
+      pickLine({ type: 'SPEAKER_TURN', payload: { player: 'Lan' } }, script, first),
+    ).toBe('Lan ơi, Lan nói đi');
+  });
+
+  it('tên làng thừa khoảng trắng thì cắt gọn chứ không mất', () => {
+    const script = scriptWith({ VOTE_OPEN: ['Làng {village} ơi'] });
+
+    expect(
+      pickLine({ type: 'VOTE_OPEN', payload: { village: '  Đà Nẵng  ' } }, script, first),
+    ).toBe('Làng Đà Nẵng ơi');
+  });
+
+  it('vòng số 0 vẫn hiện là 0, khác hẳn với vắng mặt', () => {
+    const script = scriptWith({ ROUND_START: ['Vòng {round}'] });
+
+    expect(pickLine({ type: 'ROUND_START', payload: { round: 0 } }, script, first)).toBe(
+      'Vòng 0',
+    );
+    expect(pickLine({ type: 'ROUND_START', payload: {} }, script, first)).toBe('Vòng');
+  });
 });
 ```
+
+Hai test `$` và "quét lại" ghim đúng hai lỗi thật đã tái hiện được ở bản đầu. Ba test còn lại ghim hành vi vốn đã đúng nhưng chưa ai kiểm.
 
 - [ ] **Step 2: Chạy test để xác nhận đỏ**
 
@@ -703,6 +750,10 @@ export function pickLine(
   script: NarrationScript,
   rng: Rng,
 ): string {
+  // script là Record đầy đủ nên script[event.type] không bao giờ undefined qua
+  // một lệnh gọi đã kiểm kiểu. Giữ ?? [] lại làm lớp bảo hiểm cho fixture nào
+  // dựng bằng ép kiểu `as` mà lỡ thiếu một khoá — nếu không, nó đọc như code
+  // phòng thủ thừa và sẽ bị ai đó xoá đi.
   const variants = script[event.type] ?? [];
   if (variants.length === 0) return '';
 
@@ -711,15 +762,22 @@ export function pickLine(
 
 function fill(line: string, payload: NarrationPayload): string {
   const village = payload.village?.trim();
-  const player = payload.player?.trim() ?? '';
-  const round = payload.round === undefined ? '' : String(payload.round);
+
+  const values: Record<string, string> = {
+    // Làng chưa đặt tên thì gọi là "làng ta", nghe tự nhiên hơn là bỏ trống.
+    '{village}': village === undefined || village === '' ? 'ta' : village,
+    '{player}': payload.player?.trim() ?? '',
+    '{round}': payload.round === undefined ? '' : String(payload.round),
+  };
 
   return (
     line
-      // Làng chưa đặt tên thì gọi là "làng ta", nghe tự nhiên hơn là bỏ trống.
-      .replace(/\{village\}/g, village === undefined || village === '' ? 'ta' : village)
-      .replace(/\{player\}/g, player)
-      .replace(/\{round\}/g, round)
+      // Thay MỘT lượt bằng hàm, không phải ba lượt nối tiếp bằng chuỗi. Hai lý
+      // do, đều là lỗi thật đã tái hiện được: chuỗi thay thế mà chứa $& hay $$
+      // sẽ bị diễn giải thành mẫu, mà tên người chơi là chữ người dùng tự gõ;
+      // và thay nối tiếp thì giá trị chèn ở lượt trước bị lượt sau quét lại,
+      // nên ai đặt tên làng là "{player}" sẽ bị nuốt mất tên.
+      .replace(/\{village\}|\{player\}|\{round\}/g, (match) => values[match] ?? '')
       // Bỏ chỗ giữ chỗ đi thường để lại khoảng trắng đôi. Gom lại, nếu không
       // giọng đọc sẽ ngắt một nhịp thừa ngay giữa câu.
       .replace(/\s+/g, ' ')
@@ -731,7 +789,7 @@ function fill(line: string, payload: NarrationPayload): string {
 - [ ] **Step 4: Chạy test để xác nhận xanh**
 
 Run: `npm test -- --include=src/app/core/narration/line-picker.spec.ts`
-Expected: PASS, 7 test.
+Expected: PASS, 12 test.
 
 - [ ] **Step 5: Commit**
 
