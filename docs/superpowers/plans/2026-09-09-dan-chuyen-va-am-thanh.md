@@ -1300,6 +1300,7 @@ function setup(speech = new SilentSpeech()) {
       { provide: NARRATION_HOLD_MS, useValue: 0 },
       // Bốc biến thể tuần tự, không tung xúc xắc.
       { provide: NARRATION_RNG, useValue: sequentialRng() },
+      { provide: DOUBLE_KNOCK_GAP_MS, useValue: 0 },
       WordBankRepository,
       ActiveGameRepository,
       ScoreboardRepository,
@@ -1521,6 +1522,34 @@ describe('NarrationStore', () => {
 
     expect(sfx.played).toEqual([]);
   });
+
+  it('mở vote thì gõ hai tiếng', async () => {
+    const { sfx, store } = setup();
+    await store.init();
+
+    store.raise({ type: 'VOTE_OPEN', payload: {} });
+    await settle();
+    await settle();
+
+    expect(sfx.played).toEqual(['knock', 'knock']);
+  });
+
+  it('tắt tiếng giữa hai tiếng gõ thì tiếng sau không kêu nữa', async () => {
+    const { sfx, store } = setup();
+    await store.init();
+
+    store.raise({ type: 'VOTE_OPEN', payload: {} });
+    // BẮT BUỘC phải nhường một nhịp ở đây. raise() chỉ chạy đồng bộ tới await
+    // đầu tiên, nên nếu tắt tiếng ngay thì runToken tăng trước khi vòng lặp
+    // kịp chạy, và cả sự kiện bị nuốt — kể cả tiếng gõ ĐẦU. Bài kiểm khi đó
+    // đỏ bất kể có bản vá hay không, tức là vô dụng.
+    await settle();
+    await store.setSoundLevel('OFF');
+    await settle();
+    await settle();
+
+    expect(sfx.played).toEqual(['knock']);
+  });
 });
 ```
 
@@ -1592,7 +1621,10 @@ const SFX_BY_EVENT: Partial<Record<NarrationEventType, SfxCue>> = {
   WHITE_GUESS_CORRECT: { name: 'chime', times: 1 },
 };
 
-const DOUBLE_KNOCK_GAP_MS = 140;
+/** Khoảng cách giữa hai tiếng gõ đôi. Test cắm 0 để khỏi chờ thật. */
+export const DOUBLE_KNOCK_GAP_MS = new InjectionToken<number>('DOUBLE_KNOCK_GAP_MS', {
+  factory: () => 140,
+});
 
 const NEXT_LEVEL: Record<SoundLevel, SoundLevel> = {
   FULL: 'SFX_ONLY',
@@ -1613,6 +1645,7 @@ export class NarrationStore {
   private readonly speech = inject(SPEECH_PORT);
   private readonly sfx = inject(SFX_PORT);
   private readonly holdMs = inject(NARRATION_HOLD_MS);
+  private readonly knockGapMs = inject(DOUBLE_KNOCK_GAP_MS);
 
   private readonly _line = signal('');
   private readonly _soundLevel = signal<SoundLevel>('FULL');
@@ -1750,7 +1783,14 @@ export class NarrationStore {
 
     this.sfx.play(cue.name);
     if (cue.times === 2) {
-      setTimeout(() => this.sfx.play(cue.name), DOUBLE_KNOCK_GAP_MS);
+      setTimeout(() => {
+        // Kiểm lại mức lúc tiếng thứ hai thật sự phát. Người chơi bấm tắt
+        // tiếng ngay trong quãng nghỉ giữa hai tiếng gõ là chuyện có thật, và
+        // lời hứa "tắt là im ngay" phải đúng cho cả tiếng động chứ không chỉ
+        // riêng giọng đọc.
+        if (this.level === 'OFF') return;
+        this.sfx.play(cue.name);
+      }, this.knockGapMs);
     }
   }
 }
@@ -1763,7 +1803,7 @@ function delay(ms: number): Promise<void> {
 - [ ] **Step 4: Chạy test để xác nhận xanh**
 
 Run: `npm test -- --include=src/app/state/narration.store.spec.ts`
-Expected: PASS, 16 test.
+Expected: PASS, 18 test.
 
 Nếu test "đợt mới cắt đợt cũ" chập chờn, nguyên nhân gần như chắc chắn là `SilentSpeech.speak` resolve ngay nên đợt đầu chạy xong trước khi đợt hai kịp tới. Đó vẫn là hành vi đúng vì `run` gọi `stop()` ở đầu mỗi đợt, nên `stopCount` vẫn tăng. Đừng sửa mã cài đặt để chiều test.
 
