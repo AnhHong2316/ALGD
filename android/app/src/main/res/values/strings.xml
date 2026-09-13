@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Ai Là Gián Điệp</string>
+    <string name="title_activity_main">Ai Là Gián Điệp</string>
+    <string name="package_name">com.hungnguyen.ailagiandiep</string>
+    <string name="custom_url_scheme">com.hungnguyen.ailagiandiep</string>
+</resources>
