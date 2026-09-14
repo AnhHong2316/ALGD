@@ -125,15 +125,13 @@ function nameOf(state: GameState, playerId: string): string {
 }
 
 /**
- * Mở một vòng nói mới: xáo lại thứ tự trong số người còn sống và đưa về
- * người nói đầu tiên. Cũng dọn sạch dấu vết của lượt vote trước.
+ * Mở một vòng nói: đưa về người đầu `speakingOrder` và dọn sạch dấu vết của
+ * lượt vote trước.
  */
-function startRound(state: GameState, rng: Rng): EngineResult {
-  const speakingOrder = shuffle(rng, state.aliveIds);
+function openRound(state: GameState): EngineResult {
   const next: GameState = {
     ...state,
     phase: 'SPEAKING',
-    speakingOrder,
     speakerIndex: 0,
     tiedCandidateIds: [],
     revoteUsed: false,
@@ -143,9 +141,23 @@ function startRound(state: GameState, rng: Rng): EngineResult {
     state: next,
     events: [
       { type: 'ROUND_START', payload: { village: next.villageName, round: next.round } },
-      { type: 'SPEAKER_TURN', payload: { player: nameOf(next, speakingOrder[0]) } },
+      { type: 'SPEAKER_TURN', payload: { player: nameOf(next, next.speakingOrder[0]) } },
     ],
   };
+}
+
+/** Vòng đầu ván: xáo thứ tự nói đúng một lần, dùng cho suốt ván. */
+function startFirstRound(state: GameState, rng: Rng): EngineResult {
+  return openRound({ ...state, speakingOrder: shuffle(rng, state.aliveIds) });
+}
+
+/** Vòng sau: giữ nguyên thứ tự của ván, chỉ lọc bỏ người đã bị loại. */
+function startNextRound(state: GameState): EngineResult {
+  return openRound({
+    ...state,
+    round: state.round + 1,
+    speakingOrder: state.speakingOrder.filter((id) => state.aliveIds.includes(id)),
+  });
 }
 
 export function revealNextPlayer(state: GameState, rng: Rng): EngineResult {
@@ -165,7 +177,7 @@ export function revealNextPlayer(state: GameState, rng: Rng): EngineResult {
     };
   }
 
-  return startRound(dealt, rng);
+  return startFirstRound(dealt, rng);
 }
 
 /**
@@ -211,7 +223,7 @@ export function advanceSpeaker(state: GameState, rng: Rng): EngineResult {
     };
   }
 
-  return startRound({ ...state, round: state.round + 1 }, rng);
+  return startNextRound(state);
 }
 
 /** Loại một người và chuyển sang pha lộ danh tính tương ứng với vai của họ. */
@@ -249,8 +261,8 @@ function eliminate(
 }
 
 /** Vòng này không ai bị loại: quay lại vòng nói, không kiểm tra kết thúc. */
-function noElimination(state: GameState, rng: Rng): EngineResult {
-  const started = startRound({ ...state, round: state.round + 1 }, rng);
+function noElimination(state: GameState): EngineResult {
+  const started = startNextRound(state);
   return {
     state: started.state,
     events: [
@@ -290,7 +302,7 @@ export function submitVotes(
     return eliminate(state, leaders[pickIndex(rng, leaders.length)], true);
   }
 
-  if (state.revoteUsed) return noElimination(state, rng);
+  if (state.revoteUsed) return noElimination(state);
 
   const next: GameState = { ...state, phase: 'TIE_BREAK', tiedCandidateIds: leaders };
   return {
@@ -312,7 +324,7 @@ export function resolveTie(
     throw new Error('resolveTie: chỉ gọi được ở pha xử hoà');
   }
 
-  if (choice === 'NO_ELIMINATION') return noElimination(state, rng);
+  if (choice === 'NO_ELIMINATION') return noElimination(state);
 
   const next: GameState = { ...state, phase: 'VOTING', revoteUsed: true };
   return {
@@ -363,7 +375,7 @@ export function continueAfterReveal(state: GameState, rng: Rng): EngineResult {
 
   const outcome = evaluateOutcome(state);
   if (outcome === null) {
-    return startRound({ ...state, round: state.round + 1 }, rng);
+    return startNextRound(state);
   }
 
   const next: GameState = { ...state, phase: 'ENDED', outcome };

@@ -327,19 +327,17 @@ describe('advanceSpeaker', () => {
     expect(state.round).toBe(1);
   });
 
-  it('mỗi vòng mới đều xáo lại thứ tự nói', () => {
-    const seen = new Set<string>();
+  it('sang vòng mới vẫn giữ nguyên thứ tự nói của ván', () => {
     for (let seed = 0; seed < 25; seed++) {
       let { state, rng } = dealt(5, seed);
-      const first = state.speakingOrder.join(',');
+      const before = state.speakingOrder.join(',');
+
       for (let i = 0; i < 5; i++) state = advanceSpeaker(state, rng).state;
-      seen.add(`${first}|${state.speakingOrder.join(',')}`);
+
+      expect(state.round).toBe(2);
+      expect(state.speakingOrder.join(',')).toBe(before);
+      expect(state.speakerIndex).toBe(0);
     }
-    const differed = [...seen].filter((entry) => {
-      const [before, after] = entry.split('|');
-      return before !== after;
-    });
-    expect(differed.length).toBeGreaterThan(0);
   });
 
   it('mở vote thì xoá sạch dấu vết lượt vote trước', () => {
@@ -584,7 +582,7 @@ describe('continueAfterReveal', () => {
     return makeState({ roles, aliveIndexes, phase: 'REVEAL', round: 3 });
   }
 
-  it('ván chưa ngã ngũ thì sang vòng nói mới với thứ tự xáo lại', () => {
+  it('ván chưa ngã ngũ thì sang vòng nói mới', () => {
     const state = revealed(['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'], [0, 1, 3]);
     const result = continueAfterReveal(state, createSeededRng(9));
 
@@ -596,6 +594,20 @@ describe('continueAfterReveal', () => {
       'ROUND_START',
       'SPEAKER_TURN',
     ]);
+  });
+
+  it('giữ nguyên thứ tự của ván, chỉ bỏ người vừa bị loại', () => {
+    const state = makeState({
+      roles: ['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'],
+      aliveIndexes: [0, 1, 3],
+      phase: 'REVEAL',
+      round: 3,
+      speakingOrder: ['p3', 'p2', 'p0', 'p1'],
+    });
+
+    const result = continueAfterReveal(state, createSeededRng(9));
+
+    expect(result.state.speakingOrder).toEqual(['p3', 'p0', 'p1']);
   });
 
   it('dân làng thắng thì kết thúc và phát đúng sự kiện', () => {
