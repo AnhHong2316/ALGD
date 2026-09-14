@@ -11,7 +11,7 @@ import {
   submitVotes,
   submitWhiteGuess,
 } from './game-engine';
-import { createSeededRng } from './rng';
+import { createSeededRng, shuffle } from './rng';
 import { makeState, TEST_CIVILIAN_WORD } from './testing/make-state';
 
 const PAIR = { id: 'pair-1', civilianWord: 'con mèo', spyWord: 'con chó' };
@@ -254,6 +254,80 @@ describe('revealNextPlayer', () => {
     for (let i = 0; i < 4; i++) result = revealNextPlayer(result.state, rng);
 
     expect(() => revealNextPlayer(result.state, rng)).toThrow(/chia bài/);
+  });
+});
+
+describe('mũ trắng hiếm khi phải nói đầu', () => {
+  const COUNT = 4;
+  const CONFIG = { ...DEFAULT_GAME_CONFIG, spyCount: 1, hasWhite: true };
+
+  /**
+   * Chia hết bài với một hạt giống, đồng thời tính sẵn HAI thứ tự mà
+   * `startFirstRound` bốc được từ chính dãy số đó.
+   *
+   * Có cả hai lượt bốc thì bài kiểm mới nói được "dùng đúng lượt thứ hai",
+   * thay vì chỉ nói "người đầu không phải mũ trắng" — mệnh đề yếu hơn nhiều,
+   * và một bản cài sai vẫn thoả mãn được nó.
+   */
+  function play(seed: number) {
+    const ids = makePlayers(COUNT).map((player) => player.id);
+
+    // Dãy số dùng cho việc dò: cho createGame ăn đúng phần đầu như ván thật,
+    // nên hai lượt xáo tiếp theo chính là hai lượt startFirstRound sẽ bốc.
+    const probe = createSeededRng(seed);
+    createGame(makeInput({ players: makePlayers(COUNT), config: CONFIG, rng: probe }));
+    const draw1 = shuffle(probe, ids);
+    const draw2 = shuffle(probe, ids);
+
+    // Ván thật: một nguồn ngẫu nhiên duy nhất xuyên suốt, giống hệt store.
+    const rng = createSeededRng(seed);
+    let result = createGame(
+      makeInput({ players: makePlayers(COUNT), config: CONFIG, rng }),
+    );
+    for (let i = 0; i < COUNT; i++) result = revealNextPlayer(result.state, rng);
+
+    const whiteId = Object.values(result.state.assignments).find(
+      (assignment) => assignment.role === 'WHITE',
+    )!.playerId;
+
+    return { order: result.state.speakingOrder, draw1, draw2, whiteId };
+  }
+
+  function findSeed(wanted: (played: ReturnType<typeof play>) => boolean): number {
+    for (let seed = 0; seed < 5000; seed++) {
+      if (wanted(play(seed))) return seed;
+    }
+    throw new Error('không tìm được hạt giống thoả điều kiện');
+  }
+
+  it('lượt bốc đầu đưa mũ trắng lên đầu thì bốc lại và dùng lượt thứ hai', () => {
+    const seed = findSeed(
+      (p) => p.draw1[0] === p.whiteId && p.draw2[0] !== p.whiteId,
+    );
+    const { order, draw2, whiteId } = play(seed);
+
+    expect(order).toEqual(draw2);
+    expect(order[0]).not.toBe(whiteId);
+  });
+
+  it('bốc lại vẫn trúng mũ trắng thì chịu, không bốc mãi', () => {
+    const seed = findSeed(
+      (p) => p.draw1[0] === p.whiteId && p.draw2[0] === p.whiteId,
+    );
+    const { order, draw2, whiteId } = play(seed);
+
+    // Chốt chặn quan trọng nhất của cả nhóm này. Không có nó thì một bản cài
+    // "bốc lại cho tới khi nào được" vẫn xanh, mà bản đó ăn số ngẫu nhiên
+    // không biết trước bao nhiêu lần — thứ rng.ts đã dặn là phải tránh.
+    expect(order).toEqual(draw2);
+    expect(order[0]).toBe(whiteId);
+  });
+
+  it('mũ trắng không đứng đầu thì không bốc lại', () => {
+    const seed = findSeed((p) => p.draw1[0] !== p.whiteId);
+    const { order, draw1 } = play(seed);
+
+    expect(order).toEqual(draw1);
   });
 });
 

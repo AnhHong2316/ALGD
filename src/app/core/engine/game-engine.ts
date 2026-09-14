@@ -146,9 +146,29 @@ function openRound(state: GameState): EngineResult {
   };
 }
 
-/** Vòng đầu ván: xáo thứ tự nói đúng một lần, dùng cho suốt ván. */
+/**
+ * Vòng đầu ván: xáo thứ tự nói, dùng cho suốt ván.
+ *
+ * Nếu mũ trắng rơi vào ghế đầu thì bốc lại ĐÚNG một lần rồi lấy kết quả đó,
+ * dù lần hai có lại ra mũ trắng hay không. Nói đầu là chỗ tệ nhất cho mũ
+ * trắng: họ không có từ nào, phải nghe gợi ý của người khác mới lần ra chủ
+ * đề, nên đi đầu gần như tự lộ. Bốc lại một lần kéo xác suất từ 1/n xuống
+ * 1/n² — với 6 người là từ 16,7% xuống 2,8%.
+ *
+ * Cố ý KHÔNG bốc cho tới khi nào được, vì hai lẽ. Một: vòng lặp không chặn số
+ * lần sẽ ăn số ngẫu nhiên không biết trước bao nhiêu lần, mà rng.ts đã dặn số
+ * lần gọi rng() là hành vi quan sát được. Hai: chừng nào xác suất chưa bằng 0
+ * thì không ai loại trừ được người nói đầu khỏi diện nghi — đưa nó về 0 là
+ * cho không cả bàn một mẩu thông tin.
+ */
 function startFirstRound(state: GameState, rng: Rng): EngineResult {
-  return openRound({ ...state, speakingOrder: shuffle(rng, state.aliveIds) });
+  const drawn = shuffle(rng, state.aliveIds);
+  const speakingOrder =
+    state.assignments[drawn[0]].role === 'WHITE'
+      ? shuffle(rng, state.aliveIds)
+      : drawn;
+
+  return openRound({ ...state, speakingOrder });
 }
 
 /** Vòng sau: giữ nguyên thứ tự của ván, chỉ lọc bỏ người đã bị loại. */
