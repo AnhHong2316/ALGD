@@ -7,6 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test --watch=false",
+    "icons": "node assets/build-icons.mjs",
     "apk": "ng build && cap sync android && npm run apk:gradle",
     "apk:gradle": "cd android && .\\gradlew.bat assembleDebug"
   },
@@ -35,6 +36,7 @@
     "@capacitor/cli": "^8.5.1",
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
+    "sharp": "^0.35.4",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }

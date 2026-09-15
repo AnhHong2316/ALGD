@@ -132,3 +132,59 @@ là xong.
   giọng mà không cần truyền chỉ số giọng. Phần tự dò giọng trong
   `capacitor-speech.ts` là để chữa bản chạy trên trình duyệt; trên điện
   thoại nó chỉ thừa chứ không hại.
+
+---
+
+## 7. Đổi logo ứng dụng
+
+Nguồn duy nhất là `assets/logo-algd.png` — nét mực trên nền trong suốt, đã
+cắt bỏ dòng chữ. Đổi logo thì thay đúng file đó rồi chạy:
+
+```bash
+npm run icons
+```
+
+Lệnh này ghi đè toàn bộ `mipmap-*` của Android, hai file XML icon thích ứng,
+và `public/favicon.png` cùng `public/apple-touch-icon.png` của bản web. Sau
+đó vẫn phải `npm run apk` mới thấy trên điện thoại.
+
+Ảnh nguồn cần **nền trong suốt** và nên có lề hẹp; `BOX` trong
+`assets/build-icons.mjs` đang ghim toạ độ vùng nét mực của ảnh hiện tại, nên
+đổi sang ảnh khác khung thì phải đo lại bao quanh.
+
+### Vì sao không dùng `capacitor-assets generate`
+
+Công cụ chính chủ của Capacitor xuất lớp icon thích ứng ở **192×192** cho
+xxxhdpi. Đặc tả Android quy định lớp này rộng 108dp, tức **432×432** ở mật độ
+đó, nên hệ điều hành phải kéo ảnh lên hơn hai lần và icon nhoè. Nó còn bọc
+thêm `android:inset="16.7%"` lên cả hai lớp, khiến hình co thêm một lần nữa
+và lớp nền mất luôn phần mép tràn. Bản tự sinh viết đúng cỡ từng mật độ nên
+hình 255px của logo gốc gần như không phải phóng to.
+
+### Hai con số đã cân bằng tay
+
+- **Hình chiếm 0,52 bề rộng khung** icon thích ứng. Lớp rộng 108dp nhưng
+  trình khởi chạy chỉ cho thấy 72dp ở giữa, nên 0,52 tương đương 78% đường
+  kính phần thấy được. Đã dựng thử ba mức rồi nhìn: 0,6 thì vành mũ gần chạm
+  mép vòng tròn; 0,46 thoáng nhưng thu về 48px lại bé.
+- **Lớp nền phủ kín cả 108dp**, không co lại vừa vùng thấy được. Phần dư ra
+  là mép tràn để trình khởi chạy còn chỗ xê dịch khi làm hiệu ứng nghiêng
+  icon; co lại cho khít là lòi nền ra ở rìa.
+
+### Bẫy của `sharp`
+
+`sharp` **luôn chạy `resize` trước `composite`**, bất kể xâu chuỗi theo thứ
+tự nào. Viết `sharp(anh).composite(matNa).resize(48)` thì ảnh bị thu về 48px
+trước, rồi mặt nạ cỡ gốc mới đắp lên, và nó văng lỗi *"Image to composite
+must have same dimensions or smaller"* — nghe như lỗi kích thước ảnh đầu vào
+chứ không phải lỗi thứ tự. Phải tách hai lượt: ghép xong xuất ra buffer, rồi
+mới `sharp(buffer).resize(...)`.
+
+### Cách kiểm
+
+Đừng tin "lệnh chạy xong nghĩa là đẹp". Cách kiểm đã dùng: ghép hai lớp
+đúng như Android làm, cắt theo mặt nạ tròn và mặt nạ bo góc, **đặt lên nền
+hồng chói** — chỗ nào lòi hồng ra là lớp nền không phủ tới đó. Rồi xem ở
+đúng cỡ thật 48px và 16px, vì icon hỏng hay hỏng ở cỡ nhỏ chứ không hỏng ở
+cỡ to. Cuối cùng mở bung file APK kiểm lại `res/mipmap-*` bên trong, để chắc
+thứ lọt vào máy đúng là thứ vừa sinh ra.
