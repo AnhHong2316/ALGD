@@ -76,6 +76,41 @@ h3 {
 }
 
 /* --------------------------------------------------------------------------
+   Khung dọc của vỏ ứng dụng
+   -------------------------------------------------------------------------- */
+
+/*
+ * Thanh trên cùng và dải dẫn chuyện nằm trong luồng thường, KHÔNG cố định.
+ * Nên nếu màn hình bên dưới tự đặt `min-height: 100dvh` thì chiều cao tài
+ * liệu luôn bằng một màn CỘNG THÊM chiều cao hai thứ đó — tức lúc nào cũng
+ * phải cuộn mới thấy hàng nút dưới cùng, kể cả khi giữa màn còn thừa cả
+ * mảng trống. Thay vào đó: cho cả vỏ làm một cột cao đúng một màn, rồi để
+ * phần nội dung giãn ra chiếm nốt chỗ còn lại.
+ */
+app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/*
+ * Angular chèn component định tuyến vào NGAY SAU `<router-outlet>` chứ không
+ * phải vào bên trong nó, nên phải chọn bằng `~` chứ không phải `>`. Vế thứ
+ * hai là các màn con của một ván (chia bài, vòng nói, bỏ phiếu…) mà GamePage
+ * bật tắt bằng @switch — chúng cũng là một tầng lồng nữa cần giãn theo.
+ *
+ * Dùng `flex: 1 0 auto` chứ không phải `flex: 1`: màn nào dài hơn một trang
+ * (danh sách người chơi chẳng hạn) vẫn phải được phép cao hơn khung và đẩy
+ * trang cuộn xuống, chứ không bị ép co lại rồi cắt cụt nội dung.
+ */
+router-outlet ~ *,
+app-game-page > * {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+}
+
+/* --------------------------------------------------------------------------
    Bố cục màn hình
    -------------------------------------------------------------------------- */
 
@@ -83,7 +118,8 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  min-height: 100dvh;
+  flex: 1 0 auto;
+  width: 100%;
   max-width: 32rem;
   margin: 0 auto;
   padding: var(--space-6) var(--space-5) var(--space-5);
@@ -213,11 +249,22 @@ h3 {
   position: relative;
 }
 
+/*
+ * `inset: 0` chứ KHÔNG âm. Bản cũ để `inset: -40% -20%`, tức khối sáng thò ra
+ * 20% bề rộng ở mỗi bên và 40% chiều cao ở trên lẫn dưới. Phần thò ra bên
+ * phải và bên dưới không bị cắt mà nới rộng luôn vùng cuộn của trang: màn
+ * hình sinh ra thanh cuộn ngang, tiêu đề bị đẩy lệch khỏi khung, và trang dài
+ * thêm gần nửa màn không vì nội dung nào cả.
+ *
+ * Muốn quầng sáng vẫn to hơn khung thì phóng chính cái gradient thay vì phóng
+ * cái hộp: bán kính 100% × 90% với tâm hơi lệch lên trên cho ra đúng vệt sáng
+ * cũ, mà hộp thì nằm gọn trong khung nên không đẻ ra chỗ cuộn nào.
+ */
 .lamp::before {
   content: '';
   position: absolute;
-  inset: -40% -20%;
-  background: radial-gradient(ellipse at 50% 40%, var(--lamp-glow), transparent 70%);
+  inset: 0;
+  background: radial-gradient(ellipse 100% 90% at 50% 32%, var(--lamp-glow), transparent 70%);
   pointer-events: none;
   z-index: 0;
 }

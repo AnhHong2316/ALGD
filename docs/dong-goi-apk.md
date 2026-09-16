@@ -188,3 +188,44 @@ hồng chói** — chỗ nào lòi hồng ra là lớp nền không phủ tới 
 đúng cỡ thật 48px và 16px, vì icon hỏng hay hỏng ở cỡ nhỏ chứ không hỏng ở
 cỡ to. Cuối cùng mở bung file APK kiểm lại `res/mipmap-*` bên trong, để chắc
 thứ lọt vào máy đúng là thứ vừa sinh ra.
+
+---
+
+## 8. Kiểm bố cục ở cỡ điện thoại
+
+```bash
+npm start        # cửa sổ khác
+npm run shots
+```
+
+Dựng app thật trong Chrome (hoặc Edge) sẵn có của máy ở khung 412×915, đi
+hết luồng lập ván tới màn chia bài, mỗi màn **đo rồi mới chụp**. Ảnh vào
+`shots/`, thư mục này đã nằm trong `.gitignore`.
+
+Con số đáng tin hơn ảnh. Với mỗi màn, nó so `scrollWidth` với `clientWidth`:
+chênh nhau dù chỉ một điểm ảnh là trang đã có thanh cuộn ngang, mà nhìn ảnh
+thì rất dễ bỏ sót. Nó cũng báo đáy nút chính nằm ở đâu, để biết nút có bị
+đẩy khỏi tầm nhìn không. Tràn ngang thì thoát với mã lỗi khác 0.
+
+Không bài kiểm đơn vị nào thay được việc này: jsdom **không tính bố cục**,
+nên trong đó `scrollWidth` luôn bằng `clientWidth` và mọi lỗi tràn đều vô
+hình.
+
+### Hai cái bẫy bố cục đã vấp
+
+Cả hai đều làm nút dưới cùng bị đẩy khỏi màn hình, và đều không lộ ra ở màn
+hình máy tính rộng rãi.
+
+**Màn tự đặt `min-height: 100dvh`.** Thanh trên cùng và dải dẫn chuyện nằm
+trong luồng thường, không cố định. Nên chiều cao tài liệu thành một màn CỘNG
+chiều cao hai thứ đó — đo được dư đúng 62px, và hàng nút dưới cùng luôn nằm
+ngoài tầm nhìn dù giữa màn còn thừa cả mảng trống. Cách chữa: cho `app-root`
+làm một cột cao đúng một màn rồi để nội dung giãn ra chiếm nốt, chứ không
+màn con nào được tự đặt chiều cao theo khung nhìn nữa.
+
+**`inset` âm trên lớp trang trí.** Quầng sáng `.lamp::before` để
+`inset: -40% -20%`, tức thò ra 20% bề rộng mỗi bên và 40% chiều cao trên
+dưới. Phần thò ra bên phải và bên dưới không bị cắt mà **nới rộng luôn vùng
+cuộn**: đo được tràn ngang 82px — đúng 20% của 412 — và tràn dọc 428px. Muốn
+vệt sáng to hơn khung thì phóng chính cái gradient (`ellipse 100% 90%`) chứ
+đừng phóng cái hộp.

@@ -45,3 +45,6 @@ Thumbs.db
 
 # Phiên brainstorm trực quan
 .superpowers/
+
+# Anh chup man hinh do scripts/screenshot.mjs sinh ra
+/shots
