@@ -6,10 +6,15 @@ import { NewGameDraftStore } from '../../state/new-game-draft.store';
 @Component({
   selector: 'app-home-page',
   template: `
-    <div class="screen home lamp">
+    <div class="screen home">
       <div class="screen__spacer"></div>
 
-      <div class="home__brand">
+      <!--
+        Ảnh nền đã vẽ sẵn tên trò chơi, nên để chữ hiện nữa là thành hai tiêu
+        đề chồng nhau. Ẩn khỏi mắt chứ KHÔNG xoá: trình đọc màn hình vẫn phải
+        đọc được tên app, mà ảnh thì nó không đọc hộ được.
+      -->
+      <div class="home__brand sr-only">
         <p class="screen__eyebrow">Trò chơi bàn tròn</p>
         <h1 class="home__title">Ai Là Gián Điệp</h1>
         <p class="muted">Một máy, chuyền tay, không cần mạng.</p>
@@ -31,6 +36,28 @@ import { NewGameDraftStore } from '../../state/new-game-draft.store';
   `,
   styles: [
     `
+      /*
+       * Ảnh nền đặt ở :host chứ không ở .screen, vì .screen bị kẹp
+       * max-width 32rem và căn giữa — để nền ở đó thì trên màn rộng ảnh chỉ
+       * phủ đúng cái cột giữa, hai bên trơ nền đen.
+       *
+       * Lớp phủ tối ở dưới không phải để cho đẹp: nút "Ván mới" nằm đè lên
+       * vùng bàn gỗ sáng màu của ảnh, không có lớp này thì mép nút lẫn vào
+       * nền. Nó nằm trước url() nên được vẽ đè lên trên ảnh.
+       */
+      :host {
+        background-image: linear-gradient(
+            to bottom,
+            rgba(11, 14, 20, 0) 40%,
+            rgba(11, 14, 20, 0.55) 70%,
+            rgba(11, 14, 20, 0.92) 100%
+          ),
+          url('/background.webp');
+        background-repeat: no-repeat;
+        background-position: center, center top;
+        background-size: cover, cover;
+      }
+
       .home {
         text-align: center;
       }

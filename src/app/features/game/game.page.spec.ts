@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_GAME_CONFIG } from '../../core/models';
 import { ActiveGameRepository } from '../../data/repositories/active-game.repository';
 import { ScoreboardRepository } from '../../data/repositories/scoreboard.repository';
@@ -328,5 +328,30 @@ describe('GamePage', () => {
     expect(session.state()?.phase).toBe('ENDED');
     expect(html.querySelector('app-end-page')).not.toBeNull();
     expect(html.textContent).toContain('Dân làng thắng');
+  });
+
+  it('rời màn ván thì dẹp dẫn chuyện', async () => {
+    configure(new MemoryStorage());
+
+    const session = TestBed.inject(GameSessionStore);
+    await session.startNew({
+      villageName: 'Ác Quỷ',
+      playerNames: NAMES,
+      config: { ...DEFAULT_GAME_CONFIG, spyCount: 1 },
+    });
+
+    const fixture = TestBed.createComponent(GamePage);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Dải dẫn chuyện nằm ở vỏ ứng dụng nên nó sống lâu hơn màn ván. Không ai
+    // dọn thì câu cuối của ván nằm lại trên màn hình chính, và đợt đọc dở còn
+    // chạy tiếp.
+    const narration = TestBed.inject(NarrationStore);
+    const cleared = vi.spyOn(narration, 'clear');
+
+    fixture.destroy();
+
+    expect(cleared).toHaveBeenCalled();
   });
 });

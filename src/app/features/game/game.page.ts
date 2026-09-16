@@ -1,6 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { GameSessionStore } from '../../state/game-session.store';
+import { NarrationStore } from '../../state/narration.store';
 import { NewGameDraftStore } from '../../state/new-game-draft.store';
 import { DealPage } from './deal.page';
 import { EndPage } from './end.page';
@@ -61,10 +62,23 @@ import { WhiteGuessPage } from './white-guess.page';
     }
   `,
 })
-export class GamePage implements OnInit {
+export class GamePage implements OnInit, OnDestroy {
   protected readonly session = inject(GameSessionStore);
   private readonly draft = inject(NewGameDraftStore);
   private readonly router = inject(Router);
+  private readonly narration = inject(NarrationStore);
+
+  /**
+   * Rời màn ván thì dẹp dẫn chuyện.
+   *
+   * Đây là chỗ duy nhất đúng để dọn, vì nó bắt được MỌI đường ra: kết ván rồi
+   * về nhà, bấm tên app trên thanh trên cùng giữa ván, bấm nút back của máy,
+   * hay ghé sang màn cài đặt. Móc vào riêng hành động "bỏ ván" thì mấy đường
+   * kia lọt hết.
+   */
+  ngOnDestroy(): void {
+    void this.narration.clear();
+  }
 
   async ngOnInit(): Promise<void> {
     if (this.session.hasGame()) return;

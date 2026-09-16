@@ -181,6 +181,22 @@ export class NarrationStore {
     await this.settings.save({ ...settings, voiceNoticeDismissed: true });
   }
 
+  /**
+   * Dẹp dẫn chuyện: cắt đợt đang chạy, bảo máy im, xoá chữ đang hiện.
+   *
+   * Dải dẫn chuyện nằm ở vỏ ứng dụng nên nó sống lâu hơn màn ván. Không dọn
+   * thì câu cuối cùng của ván nằm lại trên màn hình chính — và tệ hơn, đợt
+   * đọc còn dở vẫn chạy tiếp, đọc nốt những câu thuộc về một ván đã xong.
+   *
+   * Tăng token TRƯỚC khi xoá chữ: đợt cũ kiểm token ở đầu mỗi vòng lặp, trước
+   * lúc đặt chữ, nên sau khi token đổi nó không thể ghi đè lại chữ vừa xoá.
+   */
+  async clear(): Promise<void> {
+    this.runToken += 1;
+    this._line.set('');
+    await this.speech.stop();
+  }
+
   /** Đọc thử một câu để người dùng chỉnh tốc độ cho vừa tai. */
   async preview(): Promise<void> {
     if (this.level !== 'FULL') return;

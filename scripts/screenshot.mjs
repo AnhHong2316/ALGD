@@ -106,6 +106,19 @@ await page.locator('.screen__actions .btn--primary').first().click();
 await page.waitForTimeout(900);
 await measure('5-chia-bai');
 
+// Xác nhận đúng người rồi mới lòi lá bài ra — đây mới là màn cao nhất của
+// luồng, nên nếu chỗ nào tràn thì tràn ở đây.
+await page.locator('.screen__actions .btn--primary').first().click();
+await page.waitForTimeout(500);
+await measure('6-la-bai');
+
+// Nhấn giữ để lật, chụp cả mặt sau lẫn mặt trước.
+const card = page.locator('.secret-card');
+await card.dispatchEvent('pointerdown');
+await page.waitForTimeout(350);
+await measure('7-la-bai-mo');
+await card.dispatchEvent('pointerup');
+
 console.log('\nloi console:', errors.length ? errors : 'khong co');
 console.log(failures === 0 ? '\nKHONG man nao tran ngang.' : `\n${failures} man TRAN NGANG.`);
 

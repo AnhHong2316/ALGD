@@ -1,5 +1,7 @@
 /**
- * Sinh bộ icon Android từ `assets/logo-algd.png`.
+ * Sinh mọi ảnh app dùng, từ các file nguồn trong chính thư mục này:
+ * bộ icon Android + favicon web (từ `logo-algd.png`), và ảnh nền màn hình
+ * chính (từ `background.png`).
  *
  * Vì sao không dùng thẳng `capacitor-assets generate`: công cụ đó xuất lớp
  * icon thích ứng ở 192×192 cho xxxhdpi, trong khi đặc tả Android quy định lớp
@@ -7,12 +9,13 @@
  * vừa khung, và icon nhoè. Bản logo gốc cao 255px, vừa đủ cho khung 432px ở
  * mức 60%, nên tự sinh thì gần như không phải phóng to lần nào.
  *
- * Chạy: npm run icons
+ * Chạy: npm run images
  */
 import sharp from 'sharp';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { statSync } from 'node:fs';
 
-// Chạy từ gốc dự án (qua npm run icons), nên đường dẫn tương đối là đủ.
+// Chạy từ gốc dự án (qua npm run images), nên đường dẫn tương đối là đủ.
 const SRC = 'assets/logo-algd.png';
 const RES = 'android/app/src/main/res';
 
@@ -128,4 +131,15 @@ await (await tile(48, RATIO_LEGACY, BG)).toFile('public/favicon.png');
 await (await tile(180, RATIO_LEGACY, BG)).toFile('public/apple-touch-icon.png');
 await rm('public/favicon.ico', { force: true });
 
-console.log(`\nxong: ${count} anh Android + 2 xml + 2 anh web, da xoa 2 vector mac dinh`);
+// Ảnh nền màn hình chính. Bản PNG gốc nặng 1,6MB — nhét thẳng vào APK thì
+// riêng nó đã to hơn cả phần còn lại của ứng dụng. WebP chất lượng 85 còn
+// khoảng 99KB mà mắt thường không thấy khác, và WebView của Android đọc được
+// WebP từ rất lâu rồi.
+const bg = await sharp('assets/background.png').webp({ quality: 85 }).toBuffer();
+await writeFile('public/background.webp', bg);
+const kb = (n) => `${Math.round(n / 1024)}KB`;
+console.log(
+  `\npublic/background.webp <- background.png  (${kb(statSync('assets/background.png').size)} -> ${kb(bg.length)})`,
+);
+
+console.log(`\nxong: ${count} anh Android + 2 xml + 2 anh web + 1 anh nen`);

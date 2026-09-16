@@ -312,4 +312,47 @@ describe('NarrationStore', () => {
 
     expect(sfx.played).toEqual(['knock']);
   });
+
+  it('clear() xoá chữ đang hiện và bảo máy im', async () => {
+    const speech = new SilentSpeech();
+    const { store } = setup(speech);
+    await store.init();
+
+    store.raise({ type: 'VOTE_OPEN', payload: { village: 'Ác Quỷ' } });
+    await settle();
+    expect(store.line()).not.toBe('');
+
+    const stopsBefore = speech.stopCount;
+    await store.clear();
+
+    expect(store.line()).toBe('');
+    expect(speech.stopCount).toBeGreaterThan(stopsBefore);
+  });
+
+  it('clear() cắt luôn đợt đang đọc dở, câu sau không hiện lên nữa', async () => {
+    const speech = new PausableSpeech();
+    const { store } = setup(speech);
+    await store.init();
+
+    // Đợt hai câu. Câu đầu còn đang đọc dở thì người chơi rời màn ván.
+    store.raiseAll([
+      { type: 'CIVILIAN_KILLED', payload: { player: 'Minh', village: 'Ác Quỷ' } },
+      { type: 'CIVILIANS_WIN', payload: { village: 'Ác Quỷ' } },
+    ]);
+    await settle();
+    expect(speech.spoken.length).toBe(1);
+
+    await store.clear();
+
+    // Máy đọc nốt câu dở rồi mới trả lời hứa — đúng như đời thật, vì stop()
+    // của Android không cắt ngang giữa chừng được.
+    speech.finishAll();
+    await settle();
+    await settle();
+
+    // Chốt chặn thật của bài này: chỉ xoá chữ thôi chưa đủ. Nếu đợt cũ không
+    // bị cắt thì nó chạy tiếp câu thứ hai và chữ lại hiện lên màn Home.
+    expect(speech.spoken.length).toBe(1);
+    expect(store.line()).toBe('');
+  });
 });
