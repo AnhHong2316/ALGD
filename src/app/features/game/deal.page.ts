@@ -18,6 +18,18 @@ import { SecretCard } from './secret-card';
         Người thứ {{ position() }} / {{ total() }}
       </p>
 
+      <!--
+        Bước chuyền máy chỉ có mỗi cái tên, nên phải kẹp thêm một khoảng giãn
+        ở trên cho nhóm tên + nút nằm giữa màn; không có nó thì mọi thứ dồn
+        lên đỉnh, dưới trống hoác.
+
+        Bước lật bài thì KHÔNG: lá bài đã cao gần hết màn, thêm khoảng giãn ở
+        trên nữa là đẩy nút tụt lại xuống đáy — đúng cái đang cần chữa.
+      -->
+      @if (!confirmed()) {
+        <div class="screen__spacer"></div>
+      }
+
       <div class="deal__who">
         <p class="deal__lead">Chuyền máy cho</p>
         <h1 class="deal__name">{{ name() }}</h1>
@@ -27,18 +39,18 @@ import { SecretCard } from './secret-card';
         @if (card(); as content) {
           <app-secret-card [content]="content" />
         }
-        <div class="screen__spacer"></div>
         <div class="screen__actions">
           <button type="button" class="btn btn--primary" (click)="seen()">Tôi đã xem</button>
         </div>
-      } @else {
         <div class="screen__spacer"></div>
+      } @else {
         <div class="screen__actions">
           <button type="button" class="btn btn--primary" (click)="confirmIdentity()">
             Tôi là {{ name() }}
           </button>
           <p class="muted deal__warn">Chỉ bấm khi máy đã ở trong tay bạn.</p>
         </div>
+        <div class="screen__spacer"></div>
       }
     </div>
   `,

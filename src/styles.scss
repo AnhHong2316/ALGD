@@ -136,6 +136,16 @@ app-game-page > * {
   font-size: 2rem;
 }
 
+/*
+ * Khoảng giãn nuốt hết chỗ thừa của màn. Đặt nó ở đâu là quyết định bố cục,
+ * không phải chuyện tuỳ tiện:
+ *
+ * - ĐẶT SAU hàng nút (các màn trong ván): nút bám ngay dưới nội dung, chỗ
+ *   thừa dồn xuống đáy. Mắt đang nhìn lá bài hay tên người thì thấy nút
+ *   ngay, không phải rà xuống tận đáy màn.
+ * - ĐẶT TRƯỚC hàng nút (màn chính): nút bị đẩy xuống sát đáy. Chỉ hợp khi
+ *   phần trên là ảnh hoặc hình khối cần được thở, như màn chính.
+ */
 .screen__spacer {
   flex: 1;
 }

@@ -119,6 +119,14 @@ await page.waitForTimeout(350);
 await measure('7-la-bai-mo');
 await card.dispatchEvent('pointerup');
 
+// Chia nốt bài cho ba người còn lại để tới vòng nói. Mỗi người hai nhịp:
+// "Tôi là X" rồi "Tôi đã xem".
+for (let i = 0; i < 7; i++) {
+  await page.locator('.screen__actions .btn--primary').first().click();
+  await page.waitForTimeout(400);
+}
+await measure('8-vong-noi');
+
 console.log('\nloi console:', errors.length ? errors : 'khong co');
 console.log(failures === 0 ? '\nKHONG man nao tran ngang.' : `\n${failures} man TRAN NGANG.`);
 

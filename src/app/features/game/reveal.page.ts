@@ -20,6 +20,8 @@ const ROLE_LABEL: Record<Role, string> = {
     <div class="screen lamp reveal">
       <p class="screen__eyebrow">Vòng {{ round() }}</p>
 
+      <div class="screen__spacer"></div>
+
       @if (last(); as elimination) {
         <div class="reveal__who">
           <h1 class="reveal__name">{{ name() }}</h1>
@@ -37,11 +39,11 @@ const ROLE_LABEL: Record<Role, string> = {
         <p class="warning">Mũ trắng đoán "{{ guess }}" — không trúng.</p>
       }
 
-      <div class="screen__spacer"></div>
-
       <div class="screen__actions">
         <button type="button" class="btn btn--primary" (click)="next()">Tiếp tục</button>
       </div>
+
+      <div class="screen__spacer"></div>
     </div>
   `,
   styles: [

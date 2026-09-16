@@ -22,6 +22,8 @@ const ALMOST_UP_AT = 5;
     <div class="screen lamp speaking">
       <p class="screen__eyebrow">Vòng {{ round() }}</p>
 
+      <div class="screen__spacer"></div>
+
       <div class="speaking__who">
         <p class="speaking__lead">Tới lượt</p>
         <h1 class="speaking__name">{{ name() }}</h1>
@@ -45,8 +47,6 @@ const ALMOST_UP_AT = 5;
         }
       </div>
 
-      <div class="screen__spacer"></div>
-
       @if (roundsLeft() > 0) {
         <p class="muted">Còn {{ roundsLeft() }} vòng nữa mới được vote.</p>
       }
@@ -54,6 +54,8 @@ const ALMOST_UP_AT = 5;
       <div class="screen__actions">
         <button type="button" class="btn btn--primary" (click)="done()">Xong lượt</button>
       </div>
+
+      <div class="screen__spacer"></div>
     </div>
   `,
   styles: [

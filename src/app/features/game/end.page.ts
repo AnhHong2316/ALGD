@@ -31,6 +31,8 @@ const OUTCOME_LABEL: Record<Outcome, string> = {
         <h1 class="screen__title">{{ headline() }}</h1>
       </div>
 
+      <div class="screen__spacer"></div>
+
       <div class="end__words">
         <div class="end__word">
           <span class="field__label">Dân làng</span>
@@ -53,8 +55,6 @@ const OUTCOME_LABEL: Record<Outcome, string> = {
         }
       </div>
 
-      <div class="screen__spacer"></div>
-
       <div class="screen__actions">
         <button type="button" class="btn btn--primary" (click)="playAgain()">
           Chơi ván nữa
@@ -63,6 +63,8 @@ const OUTCOME_LABEL: Record<Outcome, string> = {
           Về trang chủ
         </button>
       </div>
+
+      <div class="screen__spacer"></div>
     </div>
   `,
   styles: [
