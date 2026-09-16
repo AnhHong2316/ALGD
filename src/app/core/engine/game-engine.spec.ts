@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CardContent, DEFAULT_GAME_CONFIG, GameConfig, Player, Role } from '../models';
 import {
+  acceptWhiteGuess,
   advanceSpeaker,
   buildCard,
   continueAfterReveal,
@@ -648,6 +649,59 @@ describe('submitWhiteGuess', () => {
   it('báo lỗi khi gọi ngoài pha đoán từ', () => {
     const state = makeState({ roles: ['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'] });
     expect(() => submitWhiteGuess(state, 'gì đó')).toThrow(/đoán từ/);
+  });
+});
+
+describe('acceptWhiteGuess', () => {
+  /** Mũ trắng vừa đoán trượt theo máy, ván đang ở pha lộ danh tính. */
+  function justMissed(text = 'quả thanh long') {
+    const guessing = makeState({
+      roles: ['CIVILIAN', 'CIVILIAN', 'SPY', 'WHITE'],
+      aliveIndexes: [0, 1, 2],
+      phase: 'WHITE_GUESS',
+      round: 3,
+    });
+    return submitWhiteGuess(guessing, text).state;
+  }
+
+  it('cả làng cho qua thì mũ trắng thắng như đoán trúng', () => {
+    const result = acceptWhiteGuess(justMissed());
+
+    expect(result.state.phase).toBe('ENDED');
+    expect(result.state.outcome).toBe('WHITE');
+    expect(result.events.map((event) => event.type)).toEqual([
+      'WHITE_GUESS_CORRECT',
+      'WHITE_WIN',
+    ]);
+  });
+
+  it('ghi lại là đã đúng, để bảng điểm và màn kết không mâu thuẫn nhau', () => {
+    const result = acceptWhiteGuess(justMissed('trái thanh long'));
+
+    // Nếu để nguyên correct: false thì ván kết thúc với "mũ trắng thắng" mà
+    // hồ sơ ván lại ghi mũ trắng đoán sai — hai chỗ nói ngược nhau.
+    expect(result.state.whiteGuess).toEqual({
+      text: 'trái thanh long',
+      correct: true,
+    });
+  });
+
+  it('báo lỗi khi gọi ngoài pha lộ danh tính', () => {
+    const state = makeState({ roles: ['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'] });
+    expect(() => acceptWhiteGuess(state)).toThrow(/lộ danh tính/);
+  });
+
+  it('báo lỗi khi ván này không có ai đoán trượt', () => {
+    const state = makeState({
+      roles: ['CIVILIAN', 'CIVILIAN', 'CIVILIAN', 'SPY'],
+      aliveIndexes: [0, 1, 3],
+      phase: 'REVEAL',
+      round: 3,
+    });
+
+    // Chốt chặn: không có nút này thì thôi, nhưng nếu ai đó gọi nhầm hàm thì
+    // phải nổ chứ không được lặng lẽ tuyên bố một người không tồn tại thắng.
+    expect(() => acceptWhiteGuess(state)).toThrow(/đoán trượt/);
   });
 });
 

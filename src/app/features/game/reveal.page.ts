@@ -41,6 +41,15 @@ const ROLE_LABEL: Record<Role, string> = {
 
       <div class="screen__actions">
         <button type="button" class="btn btn--primary" (click)="next()">Tiếp tục</button>
+
+        <!-- Lối thoát cho những ca máy chấm sai: đồng nghĩa, tiếng địa
+             phương, cách nói khác. Chỉ hiện đúng lúc mũ trắng vừa đoán
+             trượt, chứ không phải một nút bấm được mọi lúc. -->
+        @if (wrongGuess() !== null) {
+          <button type="button" class="btn btn--ghost" (click)="accept()">
+            Cả làng thấy đúng, cho qua
+          </button>
+        }
       </div>
 
       <div class="screen__spacer"></div>
@@ -109,5 +118,9 @@ export class RevealPage {
 
   next(): Promise<void> {
     return this.session.afterReveal();
+  }
+
+  accept(): Promise<void> {
+    return this.session.acceptWhiteGuess();
   }
 }

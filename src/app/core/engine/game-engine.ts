@@ -382,6 +382,42 @@ export function submitWhiteGuess(state: GameState, text: string): EngineResult {
   };
 }
 
+/**
+ * Cả làng bỏ qua cho mũ trắng: coi như đoán trúng.
+ *
+ * Vì sao cần: không bộ so khớp nào chấm được tiếng Việt cho trọn. Đảo chữ thì
+ * máy lo được, nhưng đồng nghĩa ("xe hơi" với "ô tô"), tiếng địa phương
+ * ("trái thơm" với "quả dứa") thì chịu. Mà ngay tại bàn đang có sẵn một trọng
+ * tài không thuật toán nào bằng: những người vừa nghe hết ván.
+ *
+ * Ghi luôn `correct: true` chứ không chỉ đổi mỗi kết cục. Để nguyên false thì
+ * ván kết thúc với "mũ trắng thắng" trong khi hồ sơ ván ghi mũ trắng đoán
+ * sai — hai chỗ nói ngược nhau, và bảng điểm sẽ là bên chịu trận.
+ */
+export function acceptWhiteGuess(state: GameState): EngineResult {
+  if (state.phase !== 'REVEAL') {
+    throw new Error('acceptWhiteGuess: chỉ gọi được ở pha lộ danh tính');
+  }
+  if (state.whiteGuess === null || state.whiteGuess.correct) {
+    throw new Error('acceptWhiteGuess: ván này không có ai đoán trượt');
+  }
+
+  const next: GameState = {
+    ...state,
+    whiteGuess: { ...state.whiteGuess, correct: true },
+    phase: 'ENDED',
+    outcome: 'WHITE',
+  };
+
+  return {
+    state: next,
+    events: [
+      { type: 'WHITE_GUESS_CORRECT', payload: { village: next.villageName } },
+      { type: 'WHITE_WIN', payload: { village: next.villageName } },
+    ],
+  };
+}
+
 const WIN_EVENT: Record<string, NarrationEventType> = {
   CIVILIANS: 'CIVILIANS_WIN',
   SPIES: 'SPIES_WIN',

@@ -76,4 +76,26 @@ describe('isGuessCorrect', () => {
     expect(isGuessCorrect('cha', 'chó')).toBe(true);
     expect(isGuessCorrect('mua', 'chó')).toBe(false);
   });
+
+  describe('đảo thứ tự chữ', () => {
+    it('chấp nhận khi đoán đúng chữ nhưng đảo thứ tự', () => {
+      expect(isGuessCorrect('hoang đảo', 'đảo hoang')).toBe(true);
+      expect(isGuessCorrect('đảo hoang', 'hoang đảo')).toBe(true);
+      expect(isGuessCorrect('xe đạp', 'đạp xe')).toBe(true);
+    });
+
+    it('vừa đảo thứ tự vừa sai nhẹ vẫn được', () => {
+      expect(isGuessCorrect('nuong thit banh mi', 'bánh mì thịt nướng')).toBe(true);
+    });
+
+    it('đảo thứ tự không phải giấy thông hành cho từ khác', () => {
+      // Đúng số chữ, đúng kiểu "đảo", nhưng chữ thì khác hẳn.
+      expect(isGuessCorrect('mèo con', 'con chó')).toBe(false);
+      expect(isGuessCorrect('heo cá con', 'con cá mập')).toBe(false);
+    });
+
+    it('từ một chữ không bị nới lỏng thêm', () => {
+      expect(isGuessCorrect('chó', 'mèo')).toBe(false);
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_GAME_CONFIG } from '../../core/models';
 import { ActiveGameRepository } from '../../data/repositories/active-game.repository';
@@ -96,6 +96,21 @@ function aliveWithRole(session: GameSessionStore, role: 'SPY' | 'WHITE' | 'CIVIL
  * Chơi một ván có mũ trắng cho tới lúc mũ trắng bị loại và đoán trượt, nên ván
  * dừng ở màn lộ danh tính chứ chưa kết.
  */
+/** Tìm nút theo một mẩu nhãn, trả về null nếu không có. */
+function buttonNamed(
+  fixture: ComponentFixture<RevealPage>,
+  label: string,
+): HTMLButtonElement | null {
+  const buttons = [
+    ...(fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+  ];
+  return (
+    (buttons.find((one) => (one.textContent ?? '').includes(label)) as
+      | HTMLButtonElement
+      | undefined) ?? null
+  );
+}
+
 async function setupWrongWhiteGuess() {
   const session = configure();
   await session.startNew({
@@ -278,5 +293,26 @@ describe('RevealPage', () => {
     // người vừa bị loại, mà người đó thậm chí không phải mũ trắng.
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).not.toContain('Mũ trắng đoán');
+  });
+
+  it('mũ trắng đoán trượt thì có nút để cả làng cho qua', async () => {
+    const { session, fixture } = await setupWrongWhiteGuess();
+
+    const button = buttonNamed(fixture, 'Cả làng thấy đúng');
+    expect(button).not.toBeNull();
+
+    button!.click();
+    await fixture.whenStable();
+
+    expect(session.state()?.phase).toBe('ENDED');
+    expect(session.state()?.outcome).toBe('WHITE');
+  });
+
+  it('không có ai đoán trượt thì không có nút cho qua', async () => {
+    const { fixture } = await setup('SPY');
+
+    // Nút này mở thẳng đường cho mũ trắng thắng. Hiện nhầm lúc không có ai
+    // đoán trượt là tặng không một chiến thắng cho người không tồn tại.
+    expect(buttonNamed(fixture, 'Cả làng thấy đúng')).toBeNull();
   });
 });

@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import {
   TieChoice,
+  acceptWhiteGuess,
   advanceSpeaker,
   buildCard,
   continueAfterReveal,
@@ -174,6 +175,12 @@ export class GameSessionStore {
 
   async guessCivilianWord(text: string): Promise<void> {
     const result = submitWhiteGuess(this.require(), text);
+    await this.apply(result.state, result.events);
+  }
+
+  /** Cả làng thống nhất là mũ trắng đoán đúng, dù máy chấm trượt. */
+  async acceptWhiteGuess(): Promise<void> {
+    const result = acceptWhiteGuess(this.require());
     await this.apply(result.state, result.events);
   }
 
